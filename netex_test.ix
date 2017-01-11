@@ -8,7 +8,24 @@ definitions MainDefinitions
 	DEFINE md_frameVersion { v_source + "_" + Format(datetoday(),"!yyyymmdd") }
 	DEFINE md_operatorId { "HTM" }
 	DEFINE md_operatorName { "HTM" }
-	DEFINE md_authority { "MRDH" }
+	
+	DEFINE m_contractors {
+		Different(AppendMult(
+			m_contractor_departments,
+			m_contractor_departments.m_cntr_company
+		))
+	}
+
+	DEFINE m_contractor_departments {
+		Different(AppendMult(
+			m_all_trips.Object(contractor,trp_contractor),
+			m_contracts.Object(contractor,ctra_contractor_id),
+			m_all_stops.Object(contractor,stp_contractor)
+		))
+	}
+	
+	
+	DEFINE md_authority { "RUT" }
 	DEFINE md_trp_valid CLASS trip
 		{
 		trp_duration > 0h00 
@@ -110,84 +127,27 @@ file netex
 						} # xmlelement responsibilitySets
 					xmlelement organisations
 						{
-						xmlelement Operator
+						xmlelement Authority
 							{
-							xmlattribute id 					{ value '"BISON:Operator:" + md_operatorId' }
-							xmlattribute version 				{ value '"any"' }	
-							xmlelement Name 					{ value 'md_operatorName' }
-							} # xmlelement Operator
-						foreach trip_stop
-							{	
-							from 'GetAll(vehicle_schedule, vsc_is_current).Get(block).Get(trip).Get(trip_stop)'
-							sort_by 'trp_int_number'
-							condition 'trp_duration>0h00 AND trp_is_in_service'
-							unique_on 'tstp_district'	
-
-							xmlelement Authority
+							xmlattribute id 				{ value 'md_authority + ":Authority:Ruter"' }
+							xmlattribute version 			{ value '"any"' }
+							xmlelement Name 				{ value '"Ruter"' }
+							} # xmlelement Authority
+						foreach contractor
+							{
+							from ' m_contractors '
+							unique_on ' cntr_identifier '
+							sort_by CntrSort { criteria c1 { value ' cntr_identifier ' } }
+							xmlelement Operator
 								{
-								xmlattribute id 				{ value '"BISON:Authority:"+tstp_district' }
-								xmlattribute version 			{ value '"any"' }
-								xmlelement Name 				{ value 'DefNull(tstp_district.dst_description,tstp_district)' }
-								} # xmlelement Authority
-							} # foreach trip_stop
+									xmlattribute id 		{ value 'md_authority + ":Operator:" + cntr_identifier' }
+									xmlattribute version 		{ value '"any"' }	
+									xmlelement Name 		{ value 'cntr_description' }
+								} # xmlelement Operator
+
+							}
 						} # xmlelement organisations					
-					xmlelement InfrastructureFrame
-						{
-						xmlattribute id 				{ value 'md_operatorId + ":InfrastructureFrame:1"' }
-						xmlattribute version 			{ value 'md_frameVersion' }
-						xmlelement garages
-							{
-							foreach block
-								{	
-								from 'GetAll(vehicle_schedule, vsc_is_current).Get(block)'
-								sort_by 'gar_id'
-								unique_on 'gar_id'
-								xmlelement Garage
-									{
-									xmlattribute id 				{ value 'md_operatorId + ":Garage:" + gar_id' }
-									xmlattribute version 			{ value 'md_frameVersion' }
-									xmlelement name 				{ value 'gar_description' }
-									xmlelement members
-										{
-										xmlelement GaragePointRef
-											{
-											xmlattribute id 			{ value 'md_operatorId + ":GaragePoint:" + gar_id' }
-											xmlattribute version 		{ value 'md_frameVersion' }
-											} # xmlelement GaragePointRef
-										} # xmlelement members
-									} # xmlelement Garage
-								} # foreach block
-							} # xmlelement garages
-						xmlelement vehicleAndCrewPoints
-							{
-							foreach block
-								{	
-								from 'GetAll(vehicle_schedule, vsc_is_current).Get(block)'
-								sort_by 'gar_id'
-								unique_on 'gar_id'
-								xmlelement GaragePoint
-									{
-									xmlattribute id 				{ value 'md_operatorId + ":GaragePoint:" + gar_id' }
-									xmlattribute version 			{ value 'md_frameVersion' }
-									xmlattribute Name 				{ value 'gar_description' }
-									} # xmlelement GaragePoint
-								} # foreach block
-							} # xmlelement vehicleAndCrewPoints
-						xmlelement vehicleTypes
-							{
-							foreach vehicle_group
-								{	
-								from 'GetAll(vehicle_schedule, vsc_is_current).Get(block).Get(vehicle_group)'
-								condition 'with a block {with a trip {md_trp_valid}} '
-								unique_on 'vehg_identifier'
-								xmlelement VehicleType
-									{
-									xmlattribute id	 				{ value 'md_operatorId + ":VehicleType:" + vehg_identifier' }
-									xmlattribute Name  				{ value 'vehg_description'}
-									} # xmlelement VehicleType
-								} # foreach vehicle_group
-							} # xmlelement vehicleTypes
-						} # xmlelement InfrastructureFrame
+
 					
 					xmlelement ServiceFrame
 						{
