@@ -113,6 +113,27 @@ file netex
 							} # xmlelement organisations					
 						} # xmlelement ResourceFrame				
 					
+					xmlelement SiteFrame
+						{
+						xmlelement stopPlaces
+							{
+							foreach trip_point
+								{
+								from 'GetAll(vehicle_schedule).get(trip, md_trp_valid).get(trip_point)'
+								condition ' stp_is_public '
+								unique_on 'stp_id_regtopp_calc'
+								xmlelement StopPlace
+									{
+									xmlattribute id 				{ value 'md_authority + ":sp:" + stp_id_regtopp_calc' }
+									xmlattribute version 			{ value 'md_frameVersion' }
+									xmlelement Name	{ value 'stp_alternate_name' }
+									xmlelement TransportMode { value '"funicular"' }
+									xmlelement StopPlaceType { value ' stp_node_type ' }
+									} #xmlelement StopPlace
+								} # foreach trip_point
+							} # xmlelement stopPlaces
+						
+						} # xmlelement SiteFrame
 					
 					xmlelement ServiceFrame
 						{
@@ -133,8 +154,8 @@ file netex
 										{
 										xmlelement gml:pos 
 											{
-											xmlattribute srsName 			{ value '"EPSG:32632"' }
- 											value 'Trim(Format(Object(stop,stp_identifier).loca_x_coord, "zzzzzn" )) + " " + Trim(Format(Object(stop,stp_identifier).loca_y_coord, "zzzzzzn" ))'
+											xmlattribute srsName 			{ value '"EPSG:4326"' }
+ 											value 'Object(stop,stp_identifier).loca_longitude + " " + Object(stop,stp_identifier).loca_latitude'
 											} # xmlelement gml:pos 
 										} # xmlelement Location
 									} # xmlelement RoutePoint
@@ -429,14 +450,7 @@ file netex
 									} # sort_by TripStopSort
 								xmlelement ServiceJourney
 									{
-									xmlelement validityConditions
-										{
-										xmlelement AvailabilityConditionRef
-											{
-											xmlattribute ref 		{ value 'md_authority + ":ValidityCondition:" + ":" + vsc_int_id ' }
-											} # xmlelement AvailabilityConditionRef
-										} # xmlelement validityConditions
-									
+																
 									xmlelement DepartureTime 		{ value 'trp_time_start' }
 									xmlelement JourneyPatternRef
 										{
