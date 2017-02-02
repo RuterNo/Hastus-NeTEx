@@ -1,5 +1,3 @@
-
-
 basetype time	  		{ mask "0hh'mm:ss" }		
 		
 definitions MainDefinitions 
@@ -33,6 +31,10 @@ definitions MainDefinitions
 		{
 		AppendMult("<itn_coord>", Concat(itn_coord), "</itn_coord>")
 		}
+	
+		
+		
+	
 	DEFINE m_trp_is_included CLASS trip { trp_is_for_blk }
 	DEFINE m_all_trips 
 		{
@@ -45,15 +47,26 @@ definitions MainDefinitions
 		Object(veh_disp_code, trp_veh_disp_code_3),
 		Object(veh_disp_code, trp_veh_disp_code_4),
 		Object(veh_disp_code, trp_veh_disp_code_5)) }
-
+		
+	DEFINE m_all_sched_unit_dates
+		{
+		IF p_DateStart <> null AND p_DateEnd <> null AND p_ProdPhase >=0 THEN
+			SortAsc(GetSchedUnitDates(vehicle_schedule,
+					p_SchedSet, p_SchedUnit, p_ProdPhase, p_DateStart, p_DateEnd, p_CalType, p_CalendarId), scud_date)
+		ELSE
+			null
+		}
 	end
 	} # definitions MainDefinitions 
 
 var v_source							{ type 'string'  assign 'IF p_CalendarId<>NULL THEN p_CalendarId ELSE IF p_SchedUnit<>NULL THEN p_SchedUnit '}
 var v_tpat_link_index 					{ type 'integer' assign '0' }
+var v_trp_link_index 					{ type 'integer' assign '0' }
 var v_valid_days						{ type 'string' } 
 
-file netex 
+
+file common 
+	{ name ' "common.xml" ' }
 	{
 	xmlelement PublicationDelivery 
 		{
@@ -83,7 +96,7 @@ file netex
 					{
 					xmlelement Version 
 						{
-						xmlattribute id 				{ value 'md_operatorId + ":Version:" + md_frameVersion' }
+						xmlattribute id 				{ value 'md_authority + ":Version:" + md_frameVersion' }
 						xmlattribute version 			{ value 'md_frameVersion' }
 						xmlelement StartDate 			{ value 'p_DateStart' }
 						xmlelement EndDate 				{ value 'p_DateEnd' }						
@@ -93,7 +106,7 @@ file netex
 					{
 					xmlelement ResourceFrame 
 						{
-						xmlattribute id 				{ value 'md_operatorId + ":ResourceFrame:1"' }
+						xmlattribute id 				{ value 'md_authority + ":ResourceFrame:1"' }
 						xmlattribute version 			{ value 'md_frameVersion' }
 						xmlelement dataSources
 							{
@@ -124,9 +137,70 @@ file netex
 								} # xmlelement Authority
 								
 							} # xmlelement organisations					
-						} # xmlelement ResourceFrame				
-					
-					
+						} # xmlelement ResourceFrame	
+					xmlelement ServiceCalendarFrame
+						{
+							xmlelement operatingDays
+								{
+									foreach booking_calendar_date
+									{
+										from ' m_all_sched_unit_dates.scud_calendar_date '
+										xmlelement OperatingDay
+											{
+												xmlattribute version 			{ value '"any"' }
+												xmlattribute id					{ value ' md_authority + ":noemer" ' }
+												xmlelement CalendarDate			{ value ' bcald_date ' }
+											} # xmlelement OperatingDay
+									}	# foreach booking_calendar_date
+								} # xmlelement operatingDays
+						} # xmlelement ServiceCalendarFrame
+					} # xmlelement frames
+				} # xmlelement CompositeFrame 
+			} # xmlelement dataObjects
+		} # xmlelement PublicationDelivery
+	} # file netex
+
+
+
+file linex { name ' "linex.xml" '}
+	{
+	
+	xmlelement PublicationDelivery 
+		{
+		xmlattribute xmlns { value '"http://www.netex.org.uk/netex"' }
+		xmlattribute xmlns:gml { value '"http://www.opengis.net/gml/3.2"' }
+		xmlattribute version { value '"1.0"' }
+		
+		xmlelement PublicationTimestamp { value 'DateToday()' }
+		xmlelement ParticipantRef { value '"NDOV"' }
+		
+		xmlelement dataObjects
+			{
+			xmlelement CompositeFrame 
+				{				
+				xmlattribute id 					{ value 'md_operatorId + ":CompositeFrame:1"' }
+				xmlattribute version 				{ value 'md_frameVersion' }
+				xmlattribute modification 			{ value '"new"' }
+				
+				xmlelement FrameDefaults 
+					{
+					xmlelement DefaultDataSourceRef 
+						{
+						xmlattribute ref 			{ value '"BISON:DataSource:" + md_operatorId' }
+						} # xmlelement DefaultDataSourceRef 
+					} # xmlelement FrameDefaults
+				xmlelement versions
+					{
+					xmlelement Version 
+						{
+						xmlattribute id 				{ value 'md_authority + ":Version:" + md_frameVersion' }
+						xmlattribute version 			{ value 'md_frameVersion' }
+						xmlelement StartDate 			{ value 'p_DateStart' }
+						xmlelement EndDate 				{ value 'p_DateEnd' }						
+						} # xmlelement Version 
+					} # xmlelement versions
+				xmlelement frames
+					{
 					
 					xmlelement ServiceFrame
 						{
@@ -328,7 +402,7 @@ file netex
 										{
 										foreach trip_pattern_point
 											{												
-											condition 'Prev().stp_identifier <> "" AND NOT tpatpt_is_timing_point'
+											condition 'Prev().stp_identifier <> "" AND tpatpt_is_timing_point'
 											var v_tpat_link_index 		{assign ' v_tpat_link_index + 1 '}
 											xmlelement StopPointInJourneyPattern
 												{
@@ -339,7 +413,13 @@ file netex
 													{
 													xmlattribute ref 		{ value 'md_authority + ":StopPoint:" + Prev().stp_identifier' }
 													} # xmlelement ScheduledStopPointRef
-												
+												xmlelement forBoarding
+													{
+													
+													} # xmlelement forBoarding
+												xmlelement forAlighting
+													{
+													} # xmlelement forAlighting
 												xmlelement DestinationDisplayRef
 													{
 													xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + Object(veh_disp_code, tpatpt_veh_display_code).vdc_id' }
@@ -419,6 +499,51 @@ file netex
 									{
 																
 									xmlelement DepartureTime 		{ value 'trp_time_start' }
+									xmlelement dayTypes
+										{
+										xmlelement DayTypeRef 
+											{
+											condition trp_operates_mon
+											xmlattribute version 	{ value ' "any" '}
+											xmlattribute ref		{ value ' "RUT:DayType:Monday" ' }
+											} # xmlelement DayTypeRef
+										xmlelement DayTypeRef 
+											{
+											condition trp_operates_tue
+											xmlattribute version 	{ value ' "any" '}
+											xmlattribute ref		{ value ' "RUT:DayType:Tuesday" ' }
+											} # xmlelement DayTypeRef
+										xmlelement DayTypeRef 
+											{
+											condition trp_operates_wed
+											xmlattribute version 	{ value ' "any" '}
+											xmlattribute ref		{ value ' "RUT:DayType:Wednesday" ' }
+											} # xmlelement DayTypeRef
+										xmlelement DayTypeRef 
+											{
+											condition trp_operates_thu
+											xmlattribute version 	{ value ' "any" '}
+											xmlattribute ref		{ value ' "RUT:DayType:Thursday" ' }
+											} # xmlelement DayTypeRef
+										xmlelement DayTypeRef 
+											{
+											condition trp_operates_fri
+											xmlattribute version 	{ value ' "any" '}
+											xmlattribute ref		{ value ' "RUT:DayType:Friday" ' }
+											} # xmlelement DayTypeRef
+										xmlelement DayTypeRef 
+											{
+											condition trp_operates_sat
+											xmlattribute version 	{ value ' "any" '}
+											xmlattribute ref		{ value ' "RUT:DayType:Saturday" ' }
+											} # xmlelement DayTypeRef
+										xmlelement DayTypeRef 
+											{
+											condition trp_operates_sun
+											xmlattribute version 	{ value ' "any" '}
+											xmlattribute ref		{ value ' "RUT:DayType:Sunday" ' }
+											} # xmlelement DayTypeRef
+										} # xmlelement dayTypes
 									xmlelement JourneyPatternRef
 										{
 										xmlattribute nameOfRefClass 	{ value '"ServiceJourneyPattern"' }
@@ -442,11 +567,21 @@ file netex
 													{	
 													xmlelement StopPointInJourneyPatternRef
 														{
-														# xmlattribute version { value '"any"'}
-														# xmlattribute ref { value 'md_authority + ":StopPointInJourneyPattern:" + tpat_external_id + "-" + v_trp_link_index' }
+														xmlattribute version { value '"any"'}
+														xmlattribute ref { value 'md_authority + ":StopPointInJourneyPattern:" + tpat_external_id + "-" + v_trp_link_index' }
 														} # xmlelement StopPointInJourneyPatternRef
-													# xmlelement ArrivalTime { value 'ttp_passing_time' }
-													#xmlelement DepartureTime { value 'ttp_passing_time' }
+													
+													xmlelement ArrivalTime
+														{ 
+														condition 'ttp_is_arrival'
+														value 'ttp_passing_time' 
+														} # xmlelement ArrivalTime
+													
+													xmlelement DepartureTime 
+														{ 
+														condition 'ttp_is_departure'
+														value 'ttp_passing_time' 
+														} # xmlelement DepartureTime
 													} # xmlelement  TimetabledPassingTime
 												} # foreach trip_tp
 											} # foreach trip_stop
@@ -543,5 +678,6 @@ file netex
 				} # xmlelement CompositeFrame 
 			} # xmlelement dataObjects
 		} # xmlelement PublicationDelivery
-	} # file netex
+	} # file line
+
 
