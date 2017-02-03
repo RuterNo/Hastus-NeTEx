@@ -75,7 +75,7 @@ file common
 		xmlattribute version { value '"1.0"' }
 		
 		xmlelement PublicationTimestamp { value 'DateToday()' }
-		xmlelement ParticipantRef { value '"NDOV"' }
+		xmlelement ParticipantRef { value '"RUT"' }
 		
 		xmlelement dataObjects
 			{
@@ -89,7 +89,7 @@ file common
 					{
 					xmlelement DefaultDataSourceRef 
 						{
-						xmlattribute ref 			{ value '"BISON:DataSource:" + md_operatorId' }
+						xmlattribute ref 			{ value '"RUT:DataSource:" + md_operatorId' }
 						} # xmlelement DefaultDataSourceRef 
 					} # xmlelement FrameDefaults
 				xmlelement versions
@@ -140,19 +140,31 @@ file common
 						} # xmlelement ResourceFrame	
 					xmlelement ServiceCalendarFrame
 						{
-							xmlelement operatingDays
+						xmlelement operatingDays
+							{
+							foreach booking_calendar_date
 								{
-									foreach booking_calendar_date
+								from ' m_all_sched_unit_dates.scud_calendar_date '
+								sort_by ' bcald_date '
+								
+								foreach scheduling_unit_date
 									{
-										from ' m_all_sched_unit_dates.scud_calendar_date '
+									from ' m_all_sched_unit_dates '
+									condition ' scud_date = bcald_date '
+									foreach service_context
+										{
+										unique_on ' sctx_internal_no, bcald_date '
 										xmlelement OperatingDay
 											{
-												xmlattribute version 			{ value '"any"' }
-												xmlattribute id					{ value ' md_authority + ":noemer" ' }
-												xmlelement CalendarDate			{ value ' bcald_date ' }
+											xmlattribute version 			{ value '"any"' }
+											xmlattribute id					{ value ' md_authority + ":" + bcald_date + ":" + sctx_internal_no ' }
+											xmlelement CalendarDate			{ value ' bcald_date ' }
 											} # xmlelement OperatingDay
-									}	# foreach booking_calendar_date
-								} # xmlelement operatingDays
+										} # foreach service_context
+									} # foreach scheduling_unit_date
+								
+								}	# foreach booking_calendar_date
+							} # xmlelement operatingDays
 						} # xmlelement ServiceCalendarFrame
 					} # xmlelement frames
 				} # xmlelement CompositeFrame 
@@ -218,18 +230,18 @@ file linex { name ' "linex.xml" '}
 									criteria tpat_route
 									criteria tpat_external_id
 									} # sort_by TripSort
-								unique_on 'tpat_route, tpat_external_id'
+								unique_on 'tpat_route, tpat_external_id, tpat_points'
 								condition 'md_trp_valid AND trp_is_in_service'								
 								var v_tpat_link_index 		{assign '0'}	
 								xmlelement Route
 									{
-									xmlattribute id 				{ value 'md_authority + ":Route:" + tpat_route + ":" + tpat_external_id' }
+									xmlattribute id 				{ value 'md_authority + ":Route:" + trim(tpat_route) + ":" + tpat_external_id' }
 									xmlattribute version 			{ value 'md_frameVersion' }
 									xmlelement Name 				{ value 'Object(route,trp_route).rte_description' }
 									xmlelement LineRef
 										{
 										xmlattribute version 		{ value 'md_frameVersion' }
-										xmlattribute ref 			{ value 'md_authority + ":Line:" + tpat_route' }
+										xmlattribute ref 			{ value 'md_authority + ":Line:" + trim(tpat_route)' }
 										} # xmlelement LineRef
 									xmlelement DirectionRef			{ value 'tpat_direction' }
 									xmlelement pointsInSequence
@@ -294,8 +306,7 @@ file linex { name ' "linex.xml" '}
 									xmlattribute id 				{ value 'md_authority + ":DestinationDisplay:" + vdc_id' }
 									xmlattribute version 			{ value 'md_frameVersion' }
 									xmlelement Name 				{ value 'vdc_message1' }
-									xmlelement 1 					{ value 'trp_veh_disp_code_1'}
-									xmlelement 2 					{ value 'trp_veh_disp_code_2'}
+									
 									} # xmlelement DestinationDisplay					
 								} # foreach veh_disp_code
 							} # xmlelement destinationDisplays
@@ -321,7 +332,19 @@ file linex { name ' "linex.xml" '}
 						
 						xmlelement stopAssignments
 							{
-							
+							foreach stop
+								{
+								from 'GetAll(vehicle_schedule, vsc_is_current).stps_in_vsc'
+								unique_on 'stp_identifier'
+								condition 'stp_is_public'
+								sort_by 'stp_identifier'
+								xmlelement PassengerStopAssignment
+									{
+									xmlelement ScheduledStopPointRef	{ value 'md_authority + ":StopPoint:" + stp_identifier' }
+									xmlelement StopPlaceRef				{ value 'md_authority + ":sp:" + stp_id_regtopp_calc' }
+									xmlelement QuayRef					{ value 'md_authority + ":sp:" + stp_id_regtopp_calc + ":q:" + stp_pole_number' }
+									} # xmlelement PassengerStopAssignment
+								} # foreach stop
 							} # xmlelement stopAssignments
 						
 						xmlelement timingPoints
@@ -377,6 +400,7 @@ file linex { name ' "linex.xml" '}
 										{
 										xmlattribute ref 		{ value 'md_authority + ":StopPoint:" + stp_identifier' }
 										} # xmlelement ToPointRef
+									
 									} # xmlelement TimingLink
 								} # foreach trip_pattern_point
 							} # xmlelement timingLinks
@@ -395,7 +419,7 @@ file linex { name ' "linex.xml" '}
 								var v_tpat_link_index {assign '0'}						
 								xmlelement ServiceJourneyPattern
 									{
-									xmlattribute id 			{ value 'md_authority + ":JourneyPattern:" + tpat_external_id' }
+									xmlattribute id 			{ value 'md_authority + ":JourneyPattern:" + trim(tpat_route) + "-" + tpat_external_id' }
 									xmlattribute version 		{ value 'md_frameVersion' }
 									xmlelement RouteRef			{ value 'md_authority + ":Route:" + trim(tpat_route) + ":" + tpat_external_id' }
 									xmlelement pointsInSequence
@@ -406,7 +430,7 @@ file linex { name ' "linex.xml" '}
 											var v_tpat_link_index 		{assign ' v_tpat_link_index + 1 '}
 											xmlelement StopPointInJourneyPattern
 												{
-												xmlattribute id 			{ value 'md_authority + ":StopPointInJourneyPattern:" + tpat_external_id + "-" + v_tpat_link_index' }												
+												xmlattribute id 			{ value 'md_authority + ":StopPointInJourneyPattern:" + trim(tpat_route) + "-" + tpat_external_id + "-" + v_tpat_link_index' }												
 												xmlattribute version 		{ value 'md_frameVersion' }
 												xmlattribute order 			{ value 'v_tpat_link_index' }	
 												xmlelement ScheduledStopPointRef
@@ -558,32 +582,36 @@ file linex { name ' "linex.xml" '}
 										{
 										foreach trip_stop
 											{
-											condition ' stp_node_type = 0 '
+											condition ' stp_node_type = 0 AND Prev().tstp_stop_id <> tstp_stop_id'
 											sort_by TstpSort { criteria c1 { value ' tstp_position ' } }
-											foreach trip_tp
-												{
-												var v_trp_link_index 		{assign ' v_trp_link_index + 1 '}
-												xmlelement TimetabledPassingTime
-													{	
-													xmlelement StopPointInJourneyPatternRef
-														{
-														xmlattribute version { value '"any"'}
-														xmlattribute ref { value 'md_authority + ":StopPointInJourneyPattern:" + tpat_external_id + "-" + v_trp_link_index' }
-														} # xmlelement StopPointInJourneyPatternRef
+											var v_trp_link_index 		{assign ' v_trp_link_index + 1 '}
+											xmlelement TimetabledPassingTime
+												{	
+												xmlelement StopPointInJourneyPatternRef
+													{
+													xmlattribute version { value '"any"'}
+													xmlattribute ref { value 'md_authority + ":StopPointInJourneyPattern:" + trim(trp_route) + "-" + tpat_external_id + "-" + v_trp_link_index' }
+													} # xmlelement StopPointInJourneyPatternRef
+												
+																		
+												xmlelement ArrivalTime
+													{ 
+													condition ' Get(trip_tp, 1).ttp_is_arrival '
+													value ' Get(trip_tp, 1).ttp_passing_time ' 
+													} # xmlelement ArrivalTime
+												
+												xmlelement DepartureTime 
+													{ 
+													condition ' Get(trip_tp, 1).ttp_is_departure '
+													value ' Get(trip_tp, "*").ttp_passing_time ' 
+													} # xmlelement DepartureTime
+												xmlelement DepartureTime 
+													{ 
+													condition ' NOT Get(trip_tp, 1).ttp_is_departure AND Next().tstp_stop_id = tstp_stop_id '
+													value ' Next().Get(trip_tp, 1).ttp_passing_time ' 
+													} # xmlelement DepartureTime
 													
-													xmlelement ArrivalTime
-														{ 
-														condition 'ttp_is_arrival'
-														value 'ttp_passing_time' 
-														} # xmlelement ArrivalTime
-													
-													xmlelement DepartureTime 
-														{ 
-														condition 'ttp_is_departure'
-														value 'ttp_passing_time' 
-														} # xmlelement DepartureTime
-													} # xmlelement  TimetabledPassingTime
-												} # foreach trip_tp
+												} # xmlelement TimetabledPassingTime
 											} # foreach trip_stop
 										} # xmlelement passingTimes
 										
@@ -592,88 +620,11 @@ file linex { name ' "linex.xml" '}
 										xmlattribute version 			{ value 'md_frameVersion' }
 										xmlattribute ref 				{ value 'md_authority + ":TimeDemandType:" + trp_run_time_pattern ' }
 										} # xmlelement TimeDemandTypeRef
-									xmlelement BlockRef
-										{
-										xmlattribute version { value 'md_frameVersion' }
-										xmlattribute ref { value 'md_authority + ":Block:" + trim(trp_block) ' }										
-										} # xmlelement BlockRef
+									
 									} # xmlelement ServiceJourney
 								} # foreach trip
 							} # xmlelement vehicleJourneys
-						} # xmlelement TimetableFrame
-					xmlelement VehicleScheduleFrame
-						{
-						xmlelement blocks
-							{
-							foreach vehicle_schedule
-								{	
-								from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1)'
-								sort_by vscBooking
-									{
-									criteria vsc_booking
-									criteria vsc_name
-									criteria vsc_sched_type
-									criteria vsc_scenario
-									} # sort_by vscBooking
-								unique_on 'vsc_booking,vsc_name,vsc_sched_type,vsc_scenario'
-								condition 'with a trip {md_trp_valid}'
-								foreach block
-									{
-									sort_by blkSort
-										{
-										criteria vta_number
-										criteria blk_time_start
-										} # sort_by blkSort
-									xmlelement Block
-										{	
-										xmlattribute id					{ value 'md_authority + ":Block:" +vsc_booking+"-"+vsc_int_id+"-"+AtIndex(trim(vta_number),1)+"-"+blk_time_start' }
-										xmlelement Description	  		{ value 'trim(blk_number)' }
-										xmlelement VehicleTypeRef
-											{
-											xmlattribute ref 			{ value 'md_authority + ":VehicleType:" + vehg_identifier' }
-											xmlattribute version 		{ value 'md_frameVersion' }
-											} # xmlelement VehicleTypeRef
-										xmlelement startPointRef
-											{
-											xmlattribute ref 			{ value 'blk_place_start' }
-											xmlattribute version 		{ value 'md_frameVersion' }
-											} # xmlelement startPointRef
-										xmlelement endPointRef
-											{
-											xmlattribute ref 			{ value 'blk_place_end' }
-											xmlattribute version 		{ value 'md_frameVersion' }
-											} # xmlelement endPointRef
-										xmlelement coursesOfJourneys
-											{
-											xmlelement CourseOfJourneys
-												{
-												xmlattribute id 				{ value 'md_authority + ":CourseOfJourneys:" + vsc_booking+"-"+vsc_int_id+"-"+AtIndex(trim(vta_number),1)+"-"+blk_time_start ' }
-												xmlattribute version 			{ value 'md_frameVersion' }
-												xmlelement StartTimeInBlock 	{ value 'blk_time_start' }																
-												xmlelement BlockRef
-													{
-													xmlattribute ref 		{ value 'md_authority + ":Block:" +vsc_booking+"-"+vsc_int_id+"-"+AtIndex(trim(vta_number),1)+"-"+blk_time_start' }
-													xmlattribute version 	{ value 'md_frameVersion' }
-													} # xmlelement BlockRef 
-												xmlelement journeys
-													{
-													foreach trip
-														{	
-														condition 'md_trp_valid'
-														xmlelement VehicleJourneyRef
-															{
-															xmlattribute ref		{ value 'md_authority + ":ServiceJourney:" +trp_int_number'}
-															} # xmlelement VehicleJourneyRef
-														} # foreach trip
-													} # xmlelement journeys
-												} # xmlelement CourseOfJourneys
-											} # xmlelement coursesOfJourneys
-										} # xmlelement Block
-									} # foreach block
-								} # foreach vehicle_schedule
-							} # xmlelement blocks
-						} # xmlelement VehicleScheduleFrame
-						
+						} # xmlelement TimetableFrame			
 					} # xmlelement frames
 				} # xmlelement CompositeFrame 
 			} # xmlelement dataObjects
