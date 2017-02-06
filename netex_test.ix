@@ -1,11 +1,16 @@
-basetype time	  		{ mask "0hh'mm:ss" }		
+basetype date {
+	desc "Dates are shown as yyyy-mm-dd, e.g., 2013-05-17"
+	mask '!yyyymmdd|xxxx-xx-xx'
+}
+
+basetype time	  		{ mask "0hh'mm:ss" }	
+
 		
 definitions MainDefinitions 
 	{
 	code
+	DEFINE m_now_iso8601 { DateToday() + "T" + Format(TimeNow(),"hh:mm:ss") }
 	DEFINE md_frameVersion { v_source + "_" + Format(datetoday(),"!yyyymmdd") }
-	DEFINE md_operatorId { "RUT" }
-	DEFINE md_operatorName { "RUT" }
 	DEFINE md_authority { "RUT" }
 	DEFINE md_trp_valid CLASS trip
 		{
@@ -63,10 +68,20 @@ var v_source							{ type 'string'  assign 'IF p_CalendarId<>NULL THEN p_Calenda
 var v_tpat_link_index 					{ type 'integer' assign '0' }
 var v_trp_link_index 					{ type 'integer' assign '0' }
 var v_valid_days						{ type 'string' } 
+var v_vdc1 { type 'string' }
+var v_vdc2 { type 'string'  }
+var v_vdc3 { type 'string' }
+var v_vdc4 { type 'string'  }
+var v_vdc5 { type 'string'  }
+var v_vdc1_stop { type 'string'  }
+var v_vdc2_stop { type 'string'  }
+var v_vdc3_stop { type 'string' }
+var v_vdc4_stop { type 'string' }
+var v_vdc5_stop { type 'string' }
 
 
 file common 
-	{ name ' "common.xml" ' }
+	{ name ' "_common.xml" ' }
 	{
 	xmlelement PublicationDelivery 
 		{
@@ -74,14 +89,15 @@ file common
 		xmlattribute xmlns:gml { value '"http://www.opengis.net/gml/3.2"' }
 		xmlattribute version { value '"1.0"' }
 		
-		xmlelement PublicationTimestamp { value 'DateToday()' }
-		xmlelement ParticipantRef { value '"RUT"' }
+		xmlelement PublicationTimestamp { value 'm_now_iso8601'  }
+		xmlelement ParticipantRef { value '"md_authority"' }
 		
 		xmlelement dataObjects
 			{
+			
 			xmlelement CompositeFrame 
 				{				
-				xmlattribute id 					{ value 'md_operatorId + ":CompositeFrame:1"' }
+				xmlattribute id 					{ value 'md_authority + ":CompositeFrame:1"' }
 				xmlattribute version 				{ value 'md_frameVersion' }
 				xmlattribute modification 			{ value '"new"' }
 				
@@ -89,8 +105,12 @@ file common
 					{
 					xmlelement DefaultDataSourceRef 
 						{
-						xmlattribute ref 			{ value '"RUT:DataSource:" + md_operatorId' }
+						xmlattribute ref 			{ value '"md_authority:DataSource:" + md_authority' }
 						} # xmlelement DefaultDataSourceRef 
+						xmlelement DefaultLocale
+						{
+						xmlelement TimeZone				{value ' "CET" ' }
+						} #xmlelement DefaultLocale
 					} # xmlelement FrameDefaults
 				xmlelement versions
 					{
@@ -112,7 +132,11 @@ file common
 							{
 							xmlelement DataSource 
 								{
-								xmlelement Name 		{ value '"Ruter As"' }
+								xmlattribute id 				{ value 'md_authority + ":1"' }
+								xmlattribute version 			{ value 'md_frameVersion' }
+								xmlelement Name 				{ value '"Hastus-Ruter"' }
+								xmlelement Description			{ value '"Hastus 2013 by GIRO"' }
+								xmlelement Email				{ value '"support@ruter.no"' }
 								} # xmlelement DataSource 
 							} # xmlelement dataSources
 						 
@@ -131,15 +155,17 @@ file common
 							
 							xmlelement Authority
 								{
-								xmlattribute id 				{ value '"RUT:Authority:Ruter"' }
+								xmlattribute id 				{ value '"md_authority:Authority:md_authorityer"' }
 								xmlattribute version 			{ value '"any"' }
-								xmlelement Name 				{ value '"Ruter"' }
+								xmlelement Name 				{ value '"md_authorityer"' }
 								} # xmlelement Authority
 								
 							} # xmlelement organisations					
 						} # xmlelement ResourceFrame	
 					xmlelement ServiceCalendarFrame
 						{
+						xmlattribute id 				{ value 'md_authority + ":1"' }
+						xmlattribute version 			{ value 'md_frameVersion' }
 						xmlelement operatingDays
 							{
 							foreach booking_calendar_date
@@ -183,14 +209,14 @@ file linex { name ' "linex.xml" '}
 		xmlattribute xmlns:gml { value '"http://www.opengis.net/gml/3.2"' }
 		xmlattribute version { value '"1.0"' }
 		
-		xmlelement PublicationTimestamp { value 'DateToday()' }
+		xmlelement PublicationTimestamp { value 'm_now_iso8601' }
 		xmlelement ParticipantRef { value '"NDOV"' }
 		
 		xmlelement dataObjects
 			{
 			xmlelement CompositeFrame 
 				{				
-				xmlattribute id 					{ value 'md_operatorId + ":CompositeFrame:1"' }
+				xmlattribute id 					{ value 'md_authority + ":CompositeFrame:1"' }
 				xmlattribute version 				{ value 'md_frameVersion' }
 				xmlattribute modification 			{ value '"new"' }
 				
@@ -198,7 +224,7 @@ file linex { name ' "linex.xml" '}
 					{
 					xmlelement DefaultDataSourceRef 
 						{
-						xmlattribute ref 			{ value '"BISON:DataSource:" + md_operatorId' }
+						xmlattribute ref 			{ value 'md_authority + ":DataSource:" + md_authority' }
 						} # xmlelement DefaultDataSourceRef 
 					} # xmlelement FrameDefaults
 				xmlelement versions
@@ -235,7 +261,7 @@ file linex { name ' "linex.xml" '}
 								var v_tpat_link_index 		{assign '0'}	
 								xmlelement Route
 									{
-									xmlattribute id 				{ value 'md_authority + ":Route:" + trim(tpat_route) + ":" + tpat_external_id' }
+									xmlattribute id 				{ value 'md_authority + ":Route:" + trim(tpat_route) + "-" + tpat_external_id' }
 									xmlattribute version 			{ value 'md_frameVersion' }
 									xmlelement Name 				{ value 'Object(route,trp_route).rte_description' }
 									xmlelement LineRef
@@ -243,7 +269,7 @@ file linex { name ' "linex.xml" '}
 										xmlattribute version 		{ value 'md_frameVersion' }
 										xmlattribute ref 			{ value 'md_authority + ":Line:" + trim(tpat_route)' }
 										} # xmlelement LineRef
-									xmlelement DirectionRef			{ value 'tpat_direction' }
+									xmlelement DirectionRef			{ value 'Format(tpat_direction, "n")' }
 									xmlelement pointsInSequence
 										{
 										foreach trip_pattern_point 
@@ -252,7 +278,7 @@ file linex { name ' "linex.xml" '}
 											var v_tpat_link_index {assign ' v_tpat_link_index + 1 '}										
 											xmlelement PointOnRoute
 												{
-												xmlattribute id 			{ value 'md_authority + ":PointOnRoute:" + trim(tpat_route) + "-" + v_tpat_link_index' }
+												xmlattribute id 			{ value 'md_authority + ":PointOnRoute:" + trim(tpat_route) + "-" + tpat_external_id + "-" + v_tpat_link_index' }
 												xmlattribute version 		{ value 'md_frameVersion' }
 												xmlelement RoutePointRef
 													{
@@ -285,11 +311,11 @@ file linex { name ' "linex.xml" '}
 										xmlattribute ref 			{ value 'md_authority+":Operator:"+ Object(route,trp_route).rte_oper_company' }
 										} # xmlelement AuthorityRef
 									xmlelement Monitored 			{ value 'IF trp_is_in_service THEN "true" ELSE "false"' }
-									xmlelement AccessibilityAssessment
-										{
-										xmlattribute id 			{ value 'md_authority + ":AccessibilityAssessment:" + trim(trp_route)' }
-										xmlattribute version 		{ value 'md_frameVersion' }
-										} # xmlelement AccessibilityAssessment
+									#xmlelement AccessibilityAssessment
+									#	{
+									#	xmlattribute id 			{ value 'md_authority + ":AccessibilityAssessment:" + trim(trp_route)' }
+									#	xmlattribute version 		{ value 'md_frameVersion' }
+									#	} # xmlelement AccessibilityAssessment
 									} # xmlelement Line														
 								} # foreach trip
 							} # xmlelement lines
@@ -340,40 +366,25 @@ file linex { name ' "linex.xml" '}
 								sort_by 'stp_identifier'
 								xmlelement PassengerStopAssignment
 									{
-									xmlelement ScheduledStopPointRef	{ value 'md_authority + ":StopPoint:" + stp_identifier' }
-									xmlelement StopPlaceRef				{ value 'md_authority + ":sp:" + stp_id_regtopp_calc' }
-									xmlelement QuayRef					{ value 'md_authority + ":sp:" + stp_id_regtopp_calc + ":q:" + stp_pole_number' }
+									xmlattribute id 				{ value 'md_authority + ":PassengerStopAssignment:" + stp_identifier' }
+									xmlattribute version 			{ value 'md_frameVersion' }
+									xmlelement ScheduledStopPointRef
+										{
+										xmlattribute ref 			{ value 'md_authority + ":StopPoint:" + stp_identifier' }
+										}
+									xmlelement StopPlaceRef
+										{
+										xmlattribute ref			{ value 'md_authority + ":sp:" + stp_id_regtopp_calc' }
+										}
+									xmlelement QuayRef	
+										{
+										xmlattribute ref			{ value 'md_authority + ":sp:" + stp_id_regtopp_calc + ":q:" + stp_pole_number' }
+										}
 									} # xmlelement PassengerStopAssignment
 								} # foreach stop
 							} # xmlelement stopAssignments
 						
-						xmlelement timingPoints
-							{
-							foreach stop
-								{
-								from 'GetAll(vehicle_schedule, vsc_is_current).stps_in_vsc'
-								unique_on 'stp_identifier'
-								condition 'NOT stp_is_public'
-								sort_by 'stp_identifier'
-								
-								xmlelement TimingPoint
-									{
-									xmlattribute id 			{ value 'md_authority + ":TimingPoint:" + stp_identifier' }
-									xmlattribute version 		{ value 'md_frameVersion' }
-									xmlelement Name 				{ value 'stp_description' }
-									xmlelement ForAlighting 		{ value 'IF stp_allow_debarking THEN "true" ELSE "false"' }
-									xmlelement ForBoarding 			{ value 'IF stp_allow_boarding THEN "true" ELSE "false"' }
-									xmlelement projections
-										{										
-										xmlelement PointProjectionRef
-											{										
-											xmlattribute nameOfRefClass 	{ value '"RoutePoint"' }
-											xmlattribute ref 				{ value 'md_authority + ":RoutePoint:" + stp_identifier' }
-											} # xmlelement PointProjectionRef
-										} # xmlelement projections
-									} # xmlelement TimingPoint
-								} # foreach stop
-							} # xmlelement timingPoints					
+									
 						xmlelement timingLinks
 							{
 							foreach trip_pattern_point
@@ -404,82 +415,128 @@ file linex { name ' "linex.xml" '}
 									} # xmlelement TimingLink
 								} # foreach trip_pattern_point
 							} # xmlelement timingLinks
+
 						xmlelement journeyPatterns
 							{
-							foreach trip_pattern
+							foreach trip
 								{
-								from 'GetAll(vehicle_schedule).get(trip, md_trp_valid).get(trip_pattern)'
+								from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).Get(trip, md_trp_valid)'
+								unique_on 'trp_route,trp_pattern'
+								condition 'md_trp_valid AND trp_is_in_service'
 								sort_by TripSort
 									{
-									criteria tpat_route
-									criteria tpat_external_id
+									criteria trp_pattern
 									} # sort_by TripSort
-								unique_on 'tpat_route, tpat_external_id'
-								condition 'md_trp_valid AND trp_is_in_service'
-								var v_tpat_link_index {assign '0'}						
+								
+								var v_tpat_link_index {assign '0'}	
+								var v_vdc1 { assign trp_veh_disp_code_1 }
+								var v_vdc2 { assign trp_veh_disp_code_2 }
+								var v_vdc3 { assign trp_veh_disp_code_3 }
+								var v_vdc4 { assign trp_veh_disp_code_4 }
+								var v_vdc5 { assign trp_veh_disp_code_5 }
+								var v_vdc1_stop { assign trp_stop_id_1 }
+								var v_vdc2_stop { assign trp_stop_id_2 }
+								var v_vdc3_stop { assign trp_stop_id_3 }
+								var v_vdc4_stop { assign trp_stop_id_4 }
+								var v_vdc5_stop { assign trp_stop_id_5 }
+								
 								xmlelement ServiceJourneyPattern
 									{
-									xmlattribute id 			{ value 'md_authority + ":JourneyPattern:" + trim(tpat_route) + "-" + tpat_external_id' }
+									xmlattribute id 			{ value 'md_authority + ":JourneyPattern:" + trim(trp_route) + "-" + trp_pattern' }
 									xmlattribute version 		{ value 'md_frameVersion' }
-									xmlelement RouteRef			{ value 'md_authority + ":Route:" + trim(tpat_route) + ":" + tpat_external_id' }
+									xmlelement RouteRef
+										{
+										xmlattribute ref		{ value 'md_authority + ":Route:" + trim(trp_route) + "-" + trp_pattern' }
+										} # xmlelement RouteRef
 									xmlelement pointsInSequence
 										{
-										foreach trip_pattern_point
+										foreach trip_stop
 											{												
-											condition 'Prev().stp_identifier <> "" AND tpatpt_is_timing_point'
+											condition 'stp_identifier <> "" AND stp_node_type = 0'
 											var v_tpat_link_index 		{assign ' v_tpat_link_index + 1 '}
 											xmlelement StopPointInJourneyPattern
 												{
-												xmlattribute id 			{ value 'md_authority + ":StopPointInJourneyPattern:" + trim(tpat_route) + "-" + tpat_external_id + "-" + v_tpat_link_index' }												
+												xmlattribute id 			{ value 'md_authority + ":StopPointInJourneyPattern:" + trim(trp_route) + "-" + trp_pattern + "-" + v_tpat_link_index' }												
 												xmlattribute version 		{ value 'md_frameVersion' }
 												xmlattribute order 			{ value 'v_tpat_link_index' }	
 												xmlelement ScheduledStopPointRef
 													{
-													xmlattribute ref 		{ value 'md_authority + ":StopPoint:" + Prev().stp_identifier' }
+													xmlattribute ref 		{ value 'md_authority + ":StopPoint:" + stp_identifier' }
 													} # xmlelement ScheduledStopPointRef
 												xmlelement forBoarding
 													{
-													
+													condition 'NOT Get(trip_tp, 1).ttp_is_departure'
+													value ' "false" '
 													} # xmlelement forBoarding
 												xmlelement forAlighting
 													{
+													condition 'NOT Get(trip_tp, 1).ttp_is_arrival'
+													value ' "false" '
 													} # xmlelement forAlighting
+												
 												xmlelement DestinationDisplayRef
 													{
-													xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + Object(veh_disp_code, tpatpt_veh_display_code).vdc_id' }
-													} # xmlelement DestinationDisplayRef									
+													condition 'stp_identifier = v_vdc1_stop'
+													xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc1' }
+													} # xmlelement DestinationDisplayRef	
+												
+												xmlelement DestinationDisplayRef
+													{
+													condition 'stp_identifier = v_vdc2_stop'
+													xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc2' }
+													} # xmlelement DestinationDisplayRef	
+												
+												xmlelement DestinationDisplayRef
+													{
+													condition 'stp_identifier = v_vdc3_stop'
+													xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc3' }
+													} # xmlelement DestinationDisplayRef	
+												
+												xmlelement DestinationDisplayRef
+													{
+													condition 'stp_identifier = v_vdc4_stop'
+													xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc4' }
+													} # xmlelement DestinationDisplayRef	
+												
+												xmlelement DestinationDisplayRef
+													{
+													condition 'stp_identifier = v_vdc5_stop'
+													xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc5' }
+													} # xmlelement DestinationDisplayRef	
 												} # xmlelement StopPointInJourneyPattern								
 											} # foreach trip_pattern_point						
 										} # xmlelement pointsInSequence
 									} # xmlelement ServiceJourneyPattern
 								} # foreach trip_pattern
 							} # xmlelement journeyPatterns
-						xmlelement notices
-							{
-							xmlelement journeyInterchange
-								{
-								foreach trip_meet
-									{
-									from 'GetAll(vehicle_schedule, vsc_is_current).Get(meet_builder).Get(trip_meet)'
-									xmlelement ServiceJourneyInterchange
-										{
-										xmlattribute ref 					{ value 'md_authority + ":ScheduledStopPoint:" + stp_identifier' }
-										xmlattribute version				{ value 'md_frameVersion' }
-										xmlelement Guaranteed 				{ value 'IF meet_public THEN "true" ELSE "false"' }
-										xmlelement Advertised 				{ value 'IF meet_driver THEN "true" ELSE "false"' }
-										xmlelement MaximumWaitTime 			{ value '"PT" + Format(meet_max_time, "ssss") + "S"' }
-										xmlelement FromPointRef 			{ value 'Placeref(meet_place_start).plc_identifier' }
-										xmlelement ToPointRef 				{ value 'Placeref(meet_place_end).plc_identifier' }
-										xmlelement FromJourneyRef 			{ value 'AtIndex(Get(trip).trp_int_number,1) '}	
-										xmlelement ToJourneyRef 			{ value 'AtIndex(Get(trip).trp_int_number,2)' }
-										} # xmlelement ServiceJourneyInterchange
-									} # xmlelement ServiceJourneyInterchange
-								} # xmlelement journeyInterchange
-							} # xmlelement notices			
+						#xmlelement notices
+						#	{
+						#	xmlelement journeyInterchange
+						#		{
+						#		foreach trip_meet
+						#			{
+						#			from 'GetAll(vehicle_schedule, vsc_is_current).Get(meet_builder).Get(trip_meet)'
+						#			xmlelement ServiceJourneyInterchange
+						#				{
+						#				xmlattribute ref 					{ value 'md_authority + ":ScheduledStopPoint:" + stp_identifier' }
+						#				xmlattribute version				{ value 'md_frameVersion' }
+						#				xmlelement Guaranteed 				{ value 'IF meet_public THEN "true" ELSE "false"' }
+						#				xmlelement Advertised 				{ value 'IF meet_driver THEN "true" ELSE "false"' }
+						#				xmlelement MaximumWaitTime 			{ value '"PT" + Format(meet_max_time, "ssss") + "S"' }
+						#				xmlelement FromPointRef 			{ value 'Placeref(meet_place_start).plc_identifier' }
+						#				xmlelement ToPointRef 				{ value 'Placeref(meet_place_end).plc_identifier' }
+						#				xmlelement FromJourneyRef 			{ value 'AtIndex(Get(trip).trp_int_number,1) '}	
+						#				xmlelement ToJourneyRef 			{ value 'AtIndex(Get(trip).trp_int_number,2)' }
+						#				} # xmlelement ServiceJourneyInterchange
+						#			} # xmlelement ServiceJourneyInterchange
+						#		} # xmlelement journeyInterchange
+						#	} # xmlelement notices			
 						} # xmlelement ServiceFrame	
 					
 					xmlelement TimetableFrame
 						{
+						xmlattribute id 			{ value 'md_authority + ":TimetableFrame:1"' }
+						xmlattribute version 		{ value 'md_frameVersion' }
 						xmlelement contentValidityConditions
 							{
 							foreach vehicle_schedule
@@ -500,10 +557,7 @@ file linex { name ' "linex.xml" '}
 									} # xmlelement AvailabilityCondition
 								} # foreach vehicle_schedule
 							} # xmlelement contentValidityConditions
-						xmlelement OperatorView
-							{
-							xmlattribute ref 		{ value '"BISON:Operator:" + md_authority' }							
-							} # xmlelement OperatorView
+						
 						xmlelement vehicleJourneys
 							{
 							foreach trip
@@ -521,57 +575,50 @@ file linex { name ' "linex.xml" '}
 								var v_trp_link_index {assign '0'}	
 								xmlelement ServiceJourney
 									{
-																
-									xmlelement DepartureTime 		{ value 'trp_time_start' }
+									xmlattribute id					{ value 'md_authority + ":" + trim(trp_route) + ":" + trim(trp_number)' }
+									xmlattribute version			{ value 'md_frameVersion' }		
 									xmlelement dayTypes
 										{
 										xmlelement DayTypeRef 
 											{
 											condition trp_operates_mon
-											xmlattribute version 	{ value ' "any" '}
-											xmlattribute ref		{ value ' "RUT:DayType:Monday" ' }
+											xmlattribute ref		{ value ' md_authority + ":DayType:Monday" ' }
 											} # xmlelement DayTypeRef
 										xmlelement DayTypeRef 
 											{
 											condition trp_operates_tue
-											xmlattribute version 	{ value ' "any" '}
-											xmlattribute ref		{ value ' "RUT:DayType:Tuesday" ' }
+											xmlattribute ref		{ value ' md_authority + ":DayType:Tuesday" ' }
 											} # xmlelement DayTypeRef
 										xmlelement DayTypeRef 
 											{
 											condition trp_operates_wed
-											xmlattribute version 	{ value ' "any" '}
-											xmlattribute ref		{ value ' "RUT:DayType:Wednesday" ' }
+											xmlattribute ref		{ value ' md_authority + ":DayType:Wednesday" ' }
 											} # xmlelement DayTypeRef
 										xmlelement DayTypeRef 
 											{
 											condition trp_operates_thu
-											xmlattribute version 	{ value ' "any" '}
-											xmlattribute ref		{ value ' "RUT:DayType:Thursday" ' }
+											xmlattribute ref		{ value ' md_authority + ":DayType:Thursday" ' }
 											} # xmlelement DayTypeRef
 										xmlelement DayTypeRef 
 											{
 											condition trp_operates_fri
-											xmlattribute version 	{ value ' "any" '}
-											xmlattribute ref		{ value ' "RUT:DayType:Friday" ' }
+											xmlattribute ref		{ value 'md_authority + ":DayType:Friday" ' }
 											} # xmlelement DayTypeRef
 										xmlelement DayTypeRef 
 											{
 											condition trp_operates_sat
-											xmlattribute version 	{ value ' "any" '}
-											xmlattribute ref		{ value ' "RUT:DayType:Saturday" ' }
+											xmlattribute ref		{ value 'md_authority + ":DayType:Saturday" ' }
 											} # xmlelement DayTypeRef
 										xmlelement DayTypeRef 
 											{
 											condition trp_operates_sun
-											xmlattribute version 	{ value ' "any" '}
-											xmlattribute ref		{ value ' "RUT:DayType:Sunday" ' }
+											xmlattribute ref		{ value 'md_authority + ":DayType:Sunday" ' }
 											} # xmlelement DayTypeRef
 										} # xmlelement dayTypes
 									xmlelement JourneyPatternRef
 										{
 										xmlattribute nameOfRefClass 	{ value '"ServiceJourneyPattern"' }
-										xmlattribute ref 				{ value 'md_authority + ":JourneyPattern:" + tpat_external_id' }
+										xmlattribute ref 				{ value 'md_authority + ":JourneyPattern:" + trim(trp_route) + ":" + tpat_external_id' }
 										} # xmlelement JourneyPatternRef
 									
 									xmlelement LineRef
@@ -603,7 +650,7 @@ file linex { name ' "linex.xml" '}
 												xmlelement DepartureTime 
 													{ 
 													condition ' Get(trip_tp, 1).ttp_is_departure '
-													value ' Get(trip_tp, "*").ttp_passing_time ' 
+													value ' Get(trip_tp, 1).ttp_passing_time ' 
 													} # xmlelement DepartureTime
 												xmlelement DepartureTime 
 													{ 
@@ -614,12 +661,7 @@ file linex { name ' "linex.xml" '}
 												} # xmlelement TimetabledPassingTime
 											} # foreach trip_stop
 										} # xmlelement passingTimes
-										
-									xmlelement TimeDemandTypeRef
-										{
-										xmlattribute version 			{ value 'md_frameVersion' }
-										xmlattribute ref 				{ value 'md_authority + ":TimeDemandType:" + trp_run_time_pattern ' }
-										} # xmlelement TimeDemandTypeRef
+									
 									
 									} # xmlelement ServiceJourney
 								} # foreach trip
