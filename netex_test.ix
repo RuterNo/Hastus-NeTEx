@@ -34,11 +34,18 @@ definitions MainDefinitions
 		}
 	DEFINE md_itn_coord
 		{
-		AppendMult("<itn_coord>", Concat(itn_coord), "</itn_coord>")
+		AppendMult(Format(itn_coord_lat, "nn.nnnnn"), " ", Format(itn_coord_long, "nn.nnnnn"))
 		}
-	
+	DEFINE m_stops_count
+		{
+		200 - Count(tpat_stops)
+		}
 		
-		
+	DEFINE m_passing_time
+		{
+		Get(trip_tp, 1).ttp_passing_time
+		}
+
 	
 	DEFINE m_trp_is_included CLASS trip { trp_is_for_blk }
 	DEFINE m_all_trips 
@@ -79,6 +86,18 @@ var v_vdc3_stop { type 'string' }
 var v_vdc4_stop { type 'string' }
 var v_vdc5_stop { type 'string' }
 
+parameter p_InclItineraryCoordinates {
+	title 'Inkluder koordinater for timing links'
+	desc 'Om Itinerary-koordinater skal være med.'
+	type boolean
+	def_value 'FALSE'
+}
+parameter p_InclSiteFrame {
+	title 'Inkluder SiteFrame (med fullstendige StopPlace-definisjoner'
+	desc 'Om SiteFrame skal være med.'
+	type boolean
+	def_value 'FALSE'
+}
 
 file common 
 	{ name ' "_common.xml" ' }
@@ -105,7 +124,7 @@ file common
 					{
 					xmlelement DefaultDataSourceRef 
 						{
-						xmlattribute ref 			{ value '"md_authority:DataSource:" + md_authority' }
+						xmlattribute ref 			{ value 'md_authority + ":DataSource:" + md_authority' }
 						} # xmlelement DefaultDataSourceRef 
 						xmlelement DefaultLocale
 						{
@@ -141,7 +160,7 @@ file common
 							} # xmlelement dataSources
 						 
 						xmlelement organisations
-							{
+							{						
 							foreach Contractor
 								{
 								unique_on 'cntr_identifier'
@@ -151,13 +170,13 @@ file common
 									xmlattribute version 				{ value '"any"' }	
 									xmlelement Name 					{ value 'cntr_description' }
 									} # xmlelement Operator
-								}
+								} # foreach Contractor
 							
 							xmlelement Authority
 								{
-								xmlattribute id 				{ value '"md_authority:Authority:md_authorityer"' }
+								xmlattribute id 				{ value 'md_authority + ":Authority:" + md_authority' }
 								xmlattribute version 			{ value '"any"' }
-								xmlelement Name 				{ value '"md_authorityer"' }
+								xmlelement Name 				{ value 'md_authority' }
 								} # xmlelement Authority
 								
 							} # xmlelement organisations					
@@ -239,7 +258,30 @@ file linex { name ' "linex.xml" '}
 					} # xmlelement versions
 				xmlelement frames
 					{
-					
+					xmlelement SiteFrame
+                        {
+						condition ' p_InclSiteFrame '
+                        xmlelement stopPlaces
+                            {
+                            foreach trip_point
+                                {
+                                from 'GetAll(vehicle_schedule).get(trip, md_trp_valid).get(trip_point)'
+                                condition ' stp_is_public '
+                                unique_on 'stp_id_regtopp_calc'
+                                xmlelement StopPlace
+                                    {
+                                    xmlattribute id                 { value 'md_authority + ":sp:" + stp_id_regtopp_calc' }
+                                    xmlattribute version             { value 'md_frameVersion' }
+                                    xmlelement Name    { value 'stp_alternate_name' }
+                                    # xmlelement TransportMode { value '"funicular"' }
+                                    xmlelement StopPlaceType { value ' stp_node_type ' }
+                                    } #xmlelement StopPlace
+                                } # foreach trip_point
+                            } # xmlelement stopPlaces
+						} # xmlelement SiteFrame
+                        
+                    
+
 					xmlelement ServiceFrame
 						{
 						xmlattribute id 			{ value 'md_authority + ":ServiceFrame:1"' }
@@ -250,20 +292,21 @@ file linex { name ' "linex.xml" '}
 							{
 							foreach trip_pattern
 								{
-								from 'GetAll(vehicle_schedule).get(trip, md_trp_valid).get(trip_pattern)'
+								from 'GetAll(vehicle_schedule).get(trip, md_trp_valid).Get(trip_pattern)'
 								sort_by TripSort
 									{
 									criteria tpat_route
-									criteria tpat_external_id
+									criteria tpat_via
+									
 									} # sort_by TripSort
-								unique_on 'tpat_route, tpat_external_id, tpat_points'
+								unique_on 'tpat_route, tpat_via'
 								condition 'md_trp_valid AND trp_is_in_service'								
 								var v_tpat_link_index 		{assign '0'}	
 								xmlelement Route
 									{
-									xmlattribute id 				{ value 'md_authority + ":Route:" + trim(tpat_route) + "-" + tpat_external_id' }
+									xmlattribute id 				{ value 'md_authority + ":Route:" + trim(tpat_route) + "-" + tpat_via' }
 									xmlattribute version 			{ value 'md_frameVersion' }
-									xmlelement Name 				{ value 'Object(route,trp_route).rte_description' }
+									xmlelement Name 				{ value 'Get(stop, 1).stp_alternate_name + "-" + Get(stop, "*").stp_alternate_name' }
 									xmlelement LineRef
 										{
 										xmlattribute version 		{ value 'md_frameVersion' }
@@ -411,7 +454,14 @@ file linex { name ' "linex.xml" '}
 										{
 										xmlattribute ref 		{ value 'md_authority + ":StopPoint:" + stp_identifier' }
 										} # xmlelement ToPointRef
-									
+									xmlelement gml:LineString
+										{
+										condition ' p_InclItineraryCoordinates '
+										xmlattribute srsName { value ' "4326" ' }
+										xmlelement gml:coordinates { value 'md_itn_pnt_coord' } 
+												
+											
+										} # xmlelement gml:LineString
 									} # xmlelement TimingLink
 								} # foreach trip_pattern_point
 							} # xmlelement timingLinks
@@ -422,9 +472,10 @@ file linex { name ' "linex.xml" '}
 								{
 								from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).Get(trip, md_trp_valid)'
 								unique_on 'trp_route,trp_pattern'
-								condition 'md_trp_valid AND trp_is_in_service'
+								condition 'md_trp_valid AND trp_is_in_service AND m_trp_is_included'
 								sort_by TripSort
 									{
+									criteria trp_route
 									criteria trp_pattern
 									} # sort_by TripSort
 								
@@ -446,13 +497,13 @@ file linex { name ' "linex.xml" '}
 									xmlattribute version 		{ value 'md_frameVersion' }
 									xmlelement RouteRef
 										{
-										xmlattribute ref		{ value 'md_authority + ":Route:" + trim(trp_route) + "-" + trp_pattern' }
+										xmlattribute ref		{ value 'md_authority + ":Route:" + trim(trp_route) + "-" + trim(trp_via_variant)' }
 										} # xmlelement RouteRef
 									xmlelement pointsInSequence
 										{
 										foreach trip_stop
 											{												
-											condition 'stp_identifier <> "" AND stp_node_type = 0'
+											condition 'stp_identifier <> "" AND stp_node_type = 0 AND Prev().tstp_stop_id <> tstp_stop_id'
 											var v_tpat_link_index 		{assign ' v_tpat_link_index + 1 '}
 											xmlelement StopPointInJourneyPattern
 												{
@@ -463,16 +514,17 @@ file linex { name ' "linex.xml" '}
 													{
 													xmlattribute ref 		{ value 'md_authority + ":StopPoint:" + stp_identifier' }
 													} # xmlelement ScheduledStopPointRef
-												xmlelement forBoarding
-													{
-													condition 'NOT Get(trip_tp, 1).ttp_is_departure'
-													value ' "false" '
-													} # xmlelement forBoarding
 												xmlelement forAlighting
 													{
 													condition 'NOT Get(trip_tp, 1).ttp_is_arrival'
 													value ' "false" '
 													} # xmlelement forAlighting
+												xmlelement forBoarding
+													{
+													condition 'NOT Get(trip_tp, 1).ttp_is_departure AND Next().tstp_stop_id <> tstp_stop_id '
+													value ' "false" '
+													} # xmlelement forBoarding
+												
 												
 												xmlelement DestinationDisplayRef
 													{
@@ -541,7 +593,7 @@ file linex { name ' "linex.xml" '}
 							{
 							foreach vehicle_schedule
 								{	
-								condition 'vsc_is_multiple'
+								# condition 'vsc_is_multiple'
 								var v_valid_days 		{ assign '""' } 
 								foreach scheduling_unit_date
 									{	
@@ -564,18 +616,18 @@ file linex { name ' "linex.xml" '}
 								{
 								from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).Get(trip, md_trp_valid)'
 								condition 'md_trp_valid AND m_trp_is_included'
-								unique_on 'vsc_int_id,vsc_sched_type,trp_route,trp_number'
+								unique_on 'vsc_int_id,vsc_sched_type,tpat_route,trp_number'
 								sort_by TripStopSort
 									{
 									criteria vsc_int_id
 									criteria vsc_sched_type
-									criteria trp_route
+									criteria tpat_route
 									criteria trp_number
 									} # sort_by TripStopSort
 								var v_trp_link_index {assign '0'}	
 								xmlelement ServiceJourney
 									{
-									xmlattribute id					{ value 'md_authority + ":" + trim(trp_route) + ":" + trim(trp_number)' }
+									xmlattribute id					{ value 'md_authority + ":" + trim(tpat_route) + ":" + trim(trp_number)' }
 									xmlattribute version			{ value 'md_frameVersion' }		
 									xmlelement dayTypes
 										{
@@ -618,7 +670,7 @@ file linex { name ' "linex.xml" '}
 									xmlelement JourneyPatternRef
 										{
 										xmlattribute nameOfRefClass 	{ value '"ServiceJourneyPattern"' }
-										xmlattribute ref 				{ value 'md_authority + ":JourneyPattern:" + trim(trp_route) + ":" + tpat_external_id' }
+										xmlattribute ref 				{ value 'md_authority + ":JourneyPattern:" + trim(tpat_route) + ":" + tpat_external_id' }
 										} # xmlelement JourneyPatternRef
 									
 									xmlelement LineRef
