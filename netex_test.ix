@@ -290,35 +290,36 @@ file linex { name ' "linex.xml" '}
 						
 						xmlelement routes
 							{
-							foreach trip_pattern
+							foreach trip
 								{
-								from 'GetAll(vehicle_schedule).get(trip, md_trp_valid).Get(trip_pattern)'
+								from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).Get(trip, md_trp_valid)'
+								unique_on 'trp_route,trp_pattern'
+								condition 'md_trp_valid AND trp_is_in_service AND m_trp_is_included'
 								sort_by TripSort
 									{
-									criteria tpat_route
-									criteria tpat_via
-									
+									criteria trp_route
+									criteria trp_pattern
 									} # sort_by TripSort
-								unique_on 'tpat_route, tpat_via'
-								condition 'md_trp_valid AND trp_is_in_service'								
+														
 								var v_tpat_link_index 		{assign '0'}	
 								xmlelement Route
 									{
-									xmlattribute id 				{ value 'md_authority + ":Route:" + trim(tpat_route) + "-" + tpat_via' }
+									xmlattribute id 				{ value 'md_authority + ":Route:" + trp_route + "-" + tpat_external_id' }
 									xmlattribute version 			{ value 'md_frameVersion' }
 									xmlelement Name 				{ value 'Get(stop, 1).stp_alternate_name + "-" + Get(stop, "*").stp_alternate_name' }
 									xmlelement LineRef
 										{
 										xmlattribute version 		{ value 'md_frameVersion' }
-										xmlattribute ref 			{ value 'md_authority + ":Line:" + trim(tpat_route)' }
+										xmlattribute ref 			{ value 'md_authority + ":Line:" + rte_identifier' }
 										} # xmlelement LineRef
-									xmlelement DirectionRef			{ value 'Format(tpat_direction, "n")' }
+									xmlelement DirectionRef			{ value 'tpat_direction' }
 									xmlelement pointsInSequence
 										{
-										foreach trip_pattern_point 
-											{				
-											condition 'tpatpt_is_timing_point'
-											var v_tpat_link_index {assign ' v_tpat_link_index + 1 '}										
+										foreach trip_stop
+											{												
+											condition 'stp_identifier <> "" AND stp_node_type = 0 AND Prev().tstp_stop_id <> tstp_stop_id'
+											var v_tpat_link_index 		{assign ' v_tpat_link_index + 1 '}
+																			
 											xmlelement PointOnRoute
 												{
 												xmlattribute id 			{ value 'md_authority + ":PointOnRoute:" + trim(tpat_route) + "-" + tpat_external_id + "-" + v_tpat_link_index' }
@@ -497,13 +498,13 @@ file linex { name ' "linex.xml" '}
 									xmlattribute version 		{ value 'md_frameVersion' }
 									xmlelement RouteRef
 										{
-										xmlattribute ref		{ value 'md_authority + ":Route:" + trim(trp_route) + "-" + trim(trp_via_variant)' }
+										xmlattribute ref		{ value 'md_authority + ":Route:" + trim(trp_route) +  "-" + trp_pattern'}
 										} # xmlelement RouteRef
 									xmlelement pointsInSequence
 										{
 										foreach trip_stop
 											{												
-											condition 'stp_identifier <> "" AND stp_node_type = 0 AND Prev().tstp_stop_id <> tstp_stop_id'
+											condition 'stp_identifier <> "" AND stp_node_type = 0 AND Prev().tstp_stop_id <> tstp_stop_id '
 											var v_tpat_link_index 		{assign ' v_tpat_link_index + 1 '}
 											xmlelement StopPointInJourneyPattern
 												{
@@ -591,23 +592,29 @@ file linex { name ' "linex.xml" '}
 						xmlattribute version 		{ value 'md_frameVersion' }
 						xmlelement contentValidityConditions
 							{
-							foreach vehicle_schedule
-								{	
-								# condition 'vsc_is_multiple'
+							
+								
+							foreach booking_calendar
+								{
 								var v_valid_days 		{ assign '""' } 
 								foreach scheduling_unit_date
 									{	
 									from 'GetSchedUnitDates(vehicle_schedule, p_SchedSet, p_SchedUnit, p_ProdPhase, p_DateStart, p_DateEnd, p_CalType, p_CalendarId)'
 									var v_valid_days 	{ assign 'IF Count(GetSchedUnitDates(getCurrent(vehicle_schedule), p_SchedSet, p_SchedUnit, p_ProdPhase, scud_date, scud_date, p_CalType, p_CalendarId))=1 THEN v_valid_days + "1" ELSe v_valid_days + "0" '} 
+																	
 									} # foreach scheduling_unit_date			
-								xmlelement AvailabilityCondition
+								foreach service_context
 									{
-									xmlattribute id 			{ value 'md_authority + ":AvailabilityCondition:" + v_valid_days + ":" + vsc_int_id' }
-									xmlattribute version 		{ value 'md_frameVersion' }
-									xmlelement FromDate 		{ value 'p_DateStart' }
-									xmlelement ToDate 			{ value 'p_DateEnd' }
-									} # xmlelement AvailabilityCondition
-								} # foreach vehicle_schedule
+									xmlelement AvailabilityCondition
+										{
+										xmlattribute id 			{ value 'md_authority + ":AvailabilityCondition:" + v_valid_days + ":" + sctx_internal_no' }
+										xmlattribute version 		{ value 'md_frameVersion' }
+										xmlelement FromDate 		{ value 'p_DateStart' }
+										xmlelement ToDate 			{ value 'p_DateEnd' }
+										} # xmlelement AvailabilityCondition
+									}
+								}
+							
 							} # xmlelement contentValidityConditions
 						
 						xmlelement vehicleJourneys
