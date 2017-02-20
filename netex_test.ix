@@ -742,26 +742,37 @@ file linex { name ' "linex.xml" '}
 														{
 														xmlattribute version { value 'md_frameVersion'}
 														xmlattribute ref { value 'md_authority + ":StopPointInJourneyPattern:" + trim(trp_route) + "-" + tpat_external_id + "-" + v_trp_link_index' }
-														} # xmlelement StopPointInJourneyPatternRef
-													
-																			
+														} # xmlelement StopPointInJourneyPatternRef					
 													xmlelement ArrivalTime
-														{ 
+														{
 														condition ' Get(trip_tp, 1).ttp_is_arrival '
-														value ' Get(trip_tp, 1).ttp_passing_time ' 
+														value ' Get(trip_tp, 1).ttp_pass_time_24h ' 
 														} # xmlelement ArrivalTime
-													
+													xmlelement ArrivalDayOffset
+														{
+														condition ' Get(trip_tp, 1).ttp_passing_time >= 24:00 AND Get(trip_tp, 1).ttp_is_arrival'
+														value ' "1" '
+														}
 													xmlelement DepartureTime 
-														{ 
+														{
 														condition ' Get(trip_tp, 1).ttp_is_departure '
-														value ' Get(trip_tp, 1).ttp_passing_time ' 
+														value ' Get(trip_tp, 1).ttp_pass_time_24h ' 
 														} # xmlelement DepartureTime
+													xmlelement DepartureDayOffset
+														{
+														condition ' Get(trip_tp, 1).ttp_passing_time >= 24:00 AND Get(trip_tp, 1).ttp_is_departure'
+														value ' "1" '
+														}
 													xmlelement DepartureTime 
 														{ 
 														condition ' NOT Get(trip_tp, 1).ttp_is_departure AND Next().tstp_stop_id = tstp_stop_id '
-														value ' Next().Get(trip_tp, 1).ttp_passing_time ' 
+														value ' Next().Get(trip_tp, 1).ttp_pass_time_24h ' 
 														} # xmlelement DepartureTime
-														
+													xmlelement DepartureDayOffset
+														{
+														condition ' NOT Get(trip_tp, 1).ttp_is_departure AND Next().tstp_stop_id = tstp_stop_id AND Get(trip_tp, 1).ttp_passing_time >= 24:00 '
+														value ' "1" '
+														}
 													} # xmlelement TimetabledPassingTime
 												} # foreach trip_stop
 											} # xmlelement passingTimes
@@ -773,9 +784,12 @@ file linex { name ' "linex.xml" '}
 							} # xmlelement vehicleJourneys
 						} # xmlelement TimetableFrame	
 					
-					condition p_InclVehicleScheduleFrame
+					
 					xmlelement VehicleScheduleFrame
 						{
+						xmlattribute id 			{ value 'md_authority + ":VehicleScheduleFrame:1"' }
+						xmlattribute version 		{ value 'md_frameVersion' }
+						condition p_InclVehicleScheduleFrame
 						xmlelement blocks
 							{
 							foreach vehicle_schedule
