@@ -79,8 +79,8 @@ var v_tpat_link_index 					{ type 'integer' assign '0' }
 var v_trp_link_index 					{ type 'integer' assign '0' }
 var v_stop_ass_link_index 			{ type 'integer' assign '0'}
 var v_valid_days						{ type 'string' } 
-var v_time_component_000000 { type 'string' assign '"T00:00:00"' }
-var v_time_component_235959 { type 'string' assign '"T23:59:59"' }
+var v_time_component_000000 { type 'string' assign '"T00:00:00+01:00"' }
+var v_time_component_235959 { type 'string' assign '"T23:59:59+01:00"' }
 var v_vdc1 { type 'string' }
 var v_vdc2 { type 'string'  }
 var v_vdc3 { type 'string' }
@@ -121,7 +121,7 @@ file common
 		xmlattribute version { value 'm_NeTEx_version' }
 		
 		xmlelement PublicationTimestamp { value 'm_now_iso8601'  }
-		xmlelement ParticipantRef { value '"md_authority"' }
+		xmlelement ParticipantRef { value 'md_authority' }
 		
 		xmlelement dataObjects
 			{
@@ -129,9 +129,35 @@ file common
 			xmlelement CompositeFrame 
 				{				
 				xmlattribute id 					{ value 'md_authority + ":CompositeFrame:1"' }
-				xmlattribute version 				{ value 'md_frameVersion' }
+				xmlattribute version 				{ value '"any"' }
 				xmlattribute modification 			{ value '"new"' }
 				
+				xmlelement validityConditions
+					{
+					xmlelement ValidBetween
+						{
+						
+						xmlelement FromDate { value 'p_DateStart + v_time_component_000000' }
+						xmlelement ToDate 	{ value 'p_DateEnd + v_time_component_235959' }
+						} # xmlelement ValidBetween
+					} # xmlelement validityConditions	
+				xmlelement codespaces
+					{
+					xmlelement Codespace
+						{
+						xmlattribute id					{ value '"RUT"' }
+						xmlelement Xmlns				{ value '"RUT"' }
+						xmlelement XmlnsUrl				{ value '"http://www.rutebanken.org/ns/rut"' }
+						xmlelement Description			{ value '"Ruter"' }
+						} # xmlelement Codespace
+					xmlelement Codespace
+						{
+						xmlattribute id					{ value '"NSR"' }
+						xmlelement Xmlns				{ value '"NSR"' }
+						xmlelement XmlnsUrl				{ value '"http://www.rutebanken.org/ns/nsr"' }
+						xmlelement Description			{ value '"Nasjonalt stoppestedsregister"' }
+						} # xmlelement Codespace
+					} # xmlelement codespaces
 				xmlelement FrameDefaults 
 					{
 					xmlelement DefaultDataSourceRef 
@@ -178,9 +204,23 @@ file common
 								unique_on 'cntr_identifier'
 								xmlelement Operator
 									{
-									xmlattribute id 					{ value 'md_authority + ":Operator:" + cntr_identifier' }
-									xmlattribute version 				{ value 'md_frameVersion' }	
-									xmlelement Name 					{ value 'cntr_description' }
+									xmlattribute id 							{ value 'md_authority + ":Operator:" + cntr_identifier' }
+									xmlattribute version 						{ value 'md_frameVersion' }	
+									xmlelement Name 							{ value 'cntr_description' }
+									
+									xmlelement ContactDetails
+										{
+										xmlelement Email						{ value '"kjell-t@ring.no"' }
+										} # xmlelement ContactDetails
+									xmlelement Address
+										{
+										xmlelement AddressLine1					{ value '"Storgata 999"' }
+										xmlelement Town							{ value '"1234 Lillevik"' }
+										}
+									xmlelement CustomerServiceContactDetails
+										{
+										xmlelement Email						{ value '"kundemishandling@velkommen.no"' }
+										} # xmlelement CustomerServiceContactDetails
 									} # xmlelement Operator
 								} # foreach Contractor
 							
@@ -189,6 +229,11 @@ file common
 								xmlattribute id 				{ value 'md_authority + ":Authority:" + md_authority' }
 								xmlattribute version 			{ value 'md_frameVersion' }
 								xmlelement Name 				{ value 'md_authority' }
+								xmlelement ContactDetails
+									{
+									xmlelement Email						{ value '"support@ruter.no"' }
+									} # xmlelement ContactDetails
+								
 								} # xmlelement Authority
 								
 							} # xmlelement organisations					
@@ -277,16 +322,45 @@ file linex { name ' "linex.xml" '}
 			{
 			xmlelement CompositeFrame 
 				{				
-				xmlattribute id 					{ value 'md_authority + ":CompositeFrame:1"' }
-				xmlattribute version 				{ value 'md_frameVersion' }
+				xmlattribute id 					{ value 'md_authority + ":CompositeFrame:2"' }
+				xmlattribute version 				{ value '"any"' }
 				xmlattribute modification 			{ value '"new"' }
-				
+				xmlelement validityConditions
+					{
+					xmlelement ValidBetween
+						{
+						
+						xmlelement FromDate { value 'p_DateStart + v_time_component_000000' }
+						xmlelement ToDate 	{ value 'p_DateEnd + v_time_component_235959' }
+						} # xmlelement ValidBetween
+					} # xmlelement validityConditions	
+				xmlelement codespaces
+					{
+					xmlelement Codespace
+						{
+						xmlattribute id					{ value '"RUT"' }
+						xmlelement Xmlns				{ value '"RUT"' }
+						xmlelement XmlnsUrl				{ value '"http://www.rutebanken.org/ns/rut"' }
+						xmlelement Description			{ value '"Ruter"' }
+						} # xmlelement Codespace
+					xmlelement Codespace
+						{
+						xmlattribute id					{ value '"NSR"' }
+						xmlelement Xmlns				{ value '"NSR"' }
+						xmlelement XmlnsUrl				{ value '"http://www.rutebanken.org/ns/nsr"' }
+						xmlelement Description			{ value '"Nasjonalt stoppestedsregister"' }
+						} # xmlelement Codespace
+					} # xmlelement codespaces
 				xmlelement FrameDefaults 
 					{
 					xmlelement DefaultDataSourceRef 
 						{
 						xmlattribute ref 			{ value 'md_authority + ":DataSource:" + md_authority' }
 						} # xmlelement DefaultDataSourceRef 
+						xmlelement DefaultLocale
+						{
+						xmlelement TimeZone				{value ' "CET" ' }
+						} #xmlelement DefaultLocale
 					} # xmlelement FrameDefaults
 				xmlelement versions
 					{
@@ -295,7 +369,7 @@ file linex { name ' "linex.xml" '}
 						xmlattribute id 				{ value 'md_authority + ":Version:" + md_frameVersion' }
 						xmlattribute version 			{ value 'md_frameVersion' }
 						xmlelement StartDate 			{ value 'p_DateStart + v_time_component_000000' }
-						xmlelement EndDate 				{ value 'p_DateEnd + v_time_component_235959' }							
+						xmlelement EndDate 				{ value 'p_DateEnd + v_time_component_235959' }						
 						} # xmlelement Version 
 					} # xmlelement versions
 				xmlelement frames
@@ -316,7 +390,7 @@ file linex { name ' "linex.xml" '}
                                     xmlattribute version             { value 'md_frameVersion' }
                                     xmlelement Name    { value 'stp_alternate_name' }
                                     # xmlelement TransportMode { value '"funicular"' }
-                                    xmlelement StopPlaceType { value ' stp_node_type ' }
+                                    xmlelement StopPlaceType { value ' "other" ' }
                                     } #xmlelement StopPlace
                                 } # foreach trip_point
                             } # xmlelement stopPlaces
@@ -329,6 +403,30 @@ file linex { name ' "linex.xml" '}
 						xmlattribute id 			{ value 'md_authority + ":ServiceFrame:1"' }
 						xmlattribute version 		{ value 'md_frameVersion' }
 
+						xmlelement Network
+							{
+							xmlattribute TransportOrganisationRef	{ value '"RUT"' }
+							xmlelement groupsOfLines
+								{
+								xmlelement GroupOfLines
+									{
+									xmlelement members
+										{
+										foreach trip
+											{
+											from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).Get(trip, md_trp_valid)'
+											condition 'trp_is_public'
+											unique_on 'trp_route'
+											sort_by 'trp_route'
+											xmlelement LineRef
+												{
+												xmlattribute ref { value 'trim(trp_route)' }
+												} # xmlelement LineRef
+											} # foreach trip
+										} # xmlelement members
+									} # xmlelement GroupOfLines
+								} # xmlelement groupsOfLines
+							} # xmlelement Network
 						xmlelement directions
 							{
 							xmlelement Direction
@@ -438,8 +536,8 @@ file linex { name ' "linex.xml" '}
 									{
 									xmlattribute id 				{ value 'md_authority + ":DestinationDisplay:" + vdc_id' }
 									xmlattribute version 			{ value 'md_frameVersion' }
-									xmlelement Name 				{ value 'vdc_message1' }
-									
+									#xmlelement Name 				{ value 'vdc_message1' }
+									xmlelement FrontText 			{ value 'vdc_message1' }
 									} # xmlelement DestinationDisplay					
 								} # foreach veh_disp_code
 							} # xmlelement destinationDisplays
@@ -483,6 +581,7 @@ file linex { name ' "linex.xml" '}
 									xmlelement ScheduledStopPointRef
 										{
 										xmlattribute ref 			{ value 'md_authority + ":StopPoint:" + stp_identifier' }
+										xmlattribute version		{ value '"any"' }
 										}
 									xmlelement StopPlaceRef
 										{
@@ -567,6 +666,7 @@ file linex { name ' "linex.xml" '}
 									xmlelement RouteRef
 										{
 										xmlattribute ref		{ value 'md_authority + ":Route:" + trim(trp_route) +  "-" + trp_pattern'}
+										xmlattribute version	{ value '"any"' }
 										} # xmlelement RouteRef
 									xmlelement pointsInSequence
 										{
@@ -679,7 +779,7 @@ file linex { name ' "linex.xml" '}
 									var v_trp_link_index {assign '0'}	
 									xmlelement ServiceJourney
 										{
-										xmlattribute id					{ value 'md_authority + ":" + trim(tpat_route) + "-" + vsc_int_id + "-" + trim(trp_number)' }
+										xmlattribute id					{ value 'md_authority + ":ServiceJourney:" + trim(tpat_route) + "-" + vsc_int_id + "-" + trim(trp_number)' }
 										xmlattribute version			{ value 'md_frameVersion' }		
 										xmlelement dayTypes
 											{
