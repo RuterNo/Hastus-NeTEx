@@ -525,7 +525,7 @@ file linex { name ' "linex.xml" '}
 										{
 										foreach trip_stop
 											{												
-											condition 'stp_identifier <> "" AND stp_node_type = 0 AND Prev().tstp_stop_id <> tstp_stop_id'
+											condition 'stp_identifier <> "" AND stp_node_type = 0 AND Prev().tstp_stop_id <> tstp_stop_id AND stp_is_public'
 											var v_tpat_link_index 		{assign ' v_tpat_link_index + 1 '}
 																			
 											xmlelement PointOnRoute
@@ -727,7 +727,7 @@ file linex { name ' "linex.xml" '}
 										{
 										foreach trip_stop
 											{												
-											condition 'stp_identifier <> "" AND stp_node_type = 0 AND Prev().tstp_stop_id <> tstp_stop_id '
+											condition 'stp_identifier <> "" AND stp_node_type = 0 AND Prev().tstp_stop_id <> tstp_stop_id AND stp_is_public'
 											var v_tpat_link_index 		{assign ' v_tpat_link_index + 1 '}
 											xmlelement StopPointInJourneyPattern
 												{
@@ -891,7 +891,7 @@ file linex { name ' "linex.xml" '}
 											{
 											foreach trip_stop
 												{
-												condition ' stp_node_type = 0 AND Prev().tstp_stop_id <> tstp_stop_id'
+												condition ' stp_node_type = 0 AND Prev().tstp_stop_id <> tstp_stop_id AND stp_is_public '
 												sort_by TstpSort { criteria c1 { value ' tstp_position ' } }
 												var v_trp_link_index 		{assign ' v_trp_link_index + 1 '}
 												xmlelement TimetabledPassingTime
