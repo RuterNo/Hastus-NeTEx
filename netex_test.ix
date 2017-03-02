@@ -903,32 +903,33 @@ file linex { name ' "linex.xml" '}
 														} # xmlelement StopPointInJourneyPatternRef					
 													xmlelement ArrivalTime
 														{
-														condition ' Get(trip_tp, 1).ttp_is_arrival '
-														value ' Format(Get(trip_tp, 1).ttp_pass_time_24h, "0hh:mm") + ":00" ' 
+														condition ' NOT ttp_is_departure OR Next().tstp_stop_id = tstp_stop_id '
+														value ' Format(ttp_pass_time_24h, "0hh:mm") + ":00" ' 
 														} # xmlelement ArrivalTime
 													xmlelement ArrivalDayOffset
 														{
-														condition ' Get(trip_tp, 1).ttp_passing_time >= 24:00 AND Get(trip_tp, 1).ttp_is_arrival'
+														condition ' ttp_passing_time >= 24:00 AND (NOT ttp_is_departure OR Next().tstp_stop_id = tstp_stop_id) '
 														value ' "1" '
 														}
+														
 													xmlelement DepartureTime 
 														{
-														condition ' Get(trip_tp, 1).ttp_is_departure '
-														value ' Format(Get(trip_tp, 1).ttp_pass_time_24h, "0hh:mm") + ":00" ' 
+														condition ' ttp_is_departure '
+														value ' Format(ttp_pass_time_24h, "0hh:mm") + ":00" ' 
 														} # xmlelement DepartureTime
 													xmlelement DepartureDayOffset
 														{
-														condition ' Get(trip_tp, 1).ttp_passing_time >= 24:00 AND Get(trip_tp, 1).ttp_is_departure'
+														condition ' ttp_passing_time >= 24:00 AND ttp_is_departure'
 														value ' "1" '
 														}
 													xmlelement DepartureTime 
 														{ 
-														condition ' NOT Get(trip_tp, 1).ttp_is_departure AND Next().tstp_stop_id = tstp_stop_id '
-														value ' Format(Next().Get(trip_tp, 1).ttp_pass_time_24h, "0hh:mm") + ":00"  ' 
+														condition ' NOT ttp_is_departure AND Next().tstp_stop_id = tstp_stop_id '
+														value ' Format(Next().ttp_pass_time_24h, "0hh:mm") + ":00"  ' 
 														} # xmlelement DepartureTime
 													xmlelement DepartureDayOffset
 														{
-														condition ' NOT Get(trip_tp, 1).ttp_is_departure AND Next().tstp_stop_id = tstp_stop_id AND Get(trip_tp, 1).ttp_passing_time >= 24:00 '
+														condition ' NOT ttp_is_departure AND (Next().tstp_stop_id = tstp_stop_id AND Next().ttp_passing_time >= 24:00) '
 														value ' "1" '
 														}
 													} # xmlelement TimetabledPassingTime
