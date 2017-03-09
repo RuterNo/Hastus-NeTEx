@@ -299,6 +299,45 @@ file common
 								}	# foreach vehicle_schedule
 							} # xmlelement dayTypeAssignments
 						} # xmlelement ServiceCalendarFrame
+						
+					xmlelement SiteFrame
+						{
+						xmlattribute id 			{ value 'md_authority + ":SiteFrame:1"' }
+						xmlattribute version 		{ value 'md_frameVersion' }
+						condition ' p_InclSiteFrame '
+						xmlelement stopPlaces
+							{
+							foreach trip_point
+								{
+								from 'GetAll(vehicle_schedule).get(trip, md_trp_valid).get(trip_point)'
+								condition ' stp_is_public '
+								unique_on 'stp_id_regtopp_calc'
+								var v_tempquay { assign 'stp_id_regtopp_calc' }
+								xmlelement StopPlace
+									{
+									xmlattribute id                 { value 'md_authority + ":StopPlace:" + stp_id_regtopp_calc' }
+									xmlattribute version             { value '"any"' }
+									xmlelement Name    { value 'stp_alternate_name' }
+									# xmlelement TransportMode { value '"funicular"' }
+									xmlelement StopPlaceType { value ' "other" ' }
+									xmlelement quays 
+										{
+										foreach stop
+											{
+											from ' GetAll(stop) '
+											condition ' stp_id_regtopp_calc = v_tempquay '
+											unique_on 'stp_id_regtopp'
+											xmlelement Quay 
+												{
+												xmlattribute id { value 'md_authority + ":Quay:" + stp_id_regtopp' }
+												xmlattribute version { value '"any"' }
+												} # xmlelement Quay
+											} # foreach stop
+										} # xmlelement quays
+									} #xmlelement StopPlace
+								} # foreach trip_point
+							} # xmlelement stopPlaces
+						} # xmlelement SiteFrame
 					} # xmlelement frames
 				} # xmlelement CompositeFrame 
 			} # xmlelement dataObjects
@@ -372,47 +411,8 @@ file lines
 
 					xmlelement frames
 						{
-						xmlelement SiteFrame
-							{
-							xmlattribute id 			{ value 'md_authority + ":SiteFrame:1"' }
-							xmlattribute version 		{ value 'md_frameVersion' }
-							condition ' p_InclSiteFrame '
-							xmlelement stopPlaces
-								{
-								foreach trip_point
-									{
-									from 'GetAll(vehicle_schedule).get(trip, md_trp_valid).get(trip_point)'
-									condition ' stp_is_public '
-									unique_on 'stp_id_regtopp_calc'
-									var v_tempquay { assign 'stp_id_regtopp_calc' }
-									xmlelement StopPlace
-										{
-										xmlattribute id                 { value 'md_authority + ":StopPlace:" + stp_id_regtopp_calc' }
-										xmlattribute version             { value '"any"' }
-										xmlelement Name    { value 'stp_alternate_name' }
-										# xmlelement TransportMode { value '"funicular"' }
-										xmlelement StopPlaceType { value ' "other" ' }
-										xmlelement quays 
-											{
-											foreach stop
-												{
-												from ' GetAll(stop) '
-												condition ' stp_id_regtopp_calc = v_tempquay '
-												unique_on 'stp_id_regtopp'
-												xmlelement Quay 
-													{
-													xmlattribute id { value 'md_authority + ":Quay:" + stp_id_regtopp' }
-													xmlattribute version { value '"any"' }
-													} # xmlelement Quay
-												} # foreach stop
-											} # xmlelement quays
-										} #xmlelement StopPlace
-									} # foreach trip_point
-								} # xmlelement stopPlaces
-							} # xmlelement SiteFrame
-							
-						
 
+						
 						xmlelement ServiceFrame
 							{
 							xmlattribute id 			{ value 'md_authority + ":ServiceFrame:1"' }
@@ -423,10 +423,7 @@ file lines
 								xmlattribute id 			{ value 'md_authority + ":Network:1"' }
 								xmlattribute version 		{ value 'md_frameVersion' }
 								xmlelement Name				{ value '"Ruter"' }
-								#xmlelement TransportOrganisationRef
-								#	{ 
-								#	xmlattribute ref	{ value '"RUT"' }
-								#	} # xmlelement TransportOrganisationRef
+								
 								xmlelement groupsOfLines
 									{
 									xmlelement GroupOfLines
