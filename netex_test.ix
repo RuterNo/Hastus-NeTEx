@@ -311,42 +311,7 @@ file common
 								}	# foreach vehicle_schedule
 							} # xmlelement dayTypeAssignments
 						} # xmlelement ServiceCalendarFrame
-					xmlelement SiteFrame
-						{
-						xmlattribute id 			{ value 'md_authority + ":SiteFrame:1"' }
-						xmlattribute version 		{ value 'md_frameVersion' }
-						condition ' p_DumpAllStops '
-						
-						xmlelement stopPlaces
-							{
-							foreach stop
-								{
-								unique_on 'stp_id_regtopp_calc'
-								condition ' stp_is_public '
-								var v_tempstopplace { assign 'stp_id_regtopp_calc' }
-								xmlelement StopPlace
-									{
-									xmlattribute id                 { value 'md_authority + ":StopPlace:" + stp_id_regtopp_calc' }
-									xmlattribute version            { value '"any"' }
-									xmlelement Name    				{ value 'stp_alternate_name' }
-									xmlelement StopPlaceType 		{ value ' "other" ' }
-									xmlelement quays 
-										{
-										foreach stop
-											{
-											from ' GetAll(stop) '
-											condition ' stp_id_regtopp_calc = v_tempstopplace '
-											xmlelement Quay 
-												{
-												xmlattribute id { value 'md_authority + ":Quay:" + stp_identifier' }
-												xmlattribute version { value '"any"' }
-												} # xmlelement Quay
-											} # foreach stop
-										} # xmlelement quays
-									} #xmlelement StopPlace
-								} # foreach trip_point
-							} # xmlelement stopPlaces
-						} # xmlelement SiteFrame
+					
 					
 						
 					} # xmlelement frames
@@ -359,12 +324,13 @@ file common
 
 file lines 
 	{
-	name ' rte_identifier + ".xml" '
+	name ' rte_identifier + "-" + vsc_int_id + ".xml" '
 	foreach route
 		{
-		from 'GetAll(vehicle_schedule).rtes_in_vsc'		
-		unique_on ' rte_identifier '
+		from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).rtes_in_vsc'
+		unique_on ' vsc_int_id, rte_identifier '
 		condition ' NOT p_DumpAllStops '
+		
 		xmlelement PublicationDelivery 
 			{
 			xmlattribute xmlns { value '"http://www.netex.org.uk/netex"' }
@@ -426,13 +392,13 @@ file lines
 							xmlattribute id 			{ value 'md_authority + ":SiteFrame:1"' }
 							xmlattribute version 		{ value 'md_frameVersion' }
 							condition ' p_InclSiteFrame '
-							xmlelement stopPlaces # only for current line
+							xmlelement stopPlaces
 								{
 								foreach stop
 									{
 									from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).Get(trip_pattern).tpat_stops'
 									unique_on 'stp_id_regtopp_calc'
-									condition 'NOT p_DumpAllStops AND stp_is_public AND tpat_route = rte_identifier'
+									condition ' stp_is_public AND tpat_route = rte_identifier '
 									var v_tempstopplace { assign 'stp_id_regtopp_calc' }
 									xmlelement StopPlace
 										{
@@ -461,7 +427,7 @@ file lines
 							} # xmlelement SiteFrame
 						xmlelement ServiceFrame
 							{
-							condition ' NOT p_DumpAllStops '
+							
 							xmlattribute id 			{ value 'md_authority + ":ServiceFrame:1"' }
 							xmlattribute version 		{ value 'md_frameVersion' }
 
@@ -654,8 +620,6 @@ file lines
 										xmlattribute id 				{ value 'md_authority + ":ScheduledStopPoint:" + stp_identifier' }
 										xmlattribute version 			{ value '"any"' }
 										xmlelement Name 				{ value 'stp_alternate_name' } # User def attribute (Regtopp)
-										# xmlelement ForAlighting 		{ value 'IF stp_allow_debarking THEN "true" ELSE "false"' }
-										# xmlelement ForBoarding 		{ value 'IF stp_allow_boarding THEN "true" ELSE "false"' }
 										
 										} # xmlelement ScheduledStopPoint
 									} # foreach stop
@@ -842,28 +806,7 @@ file lines
 										} # xmlelement JourneyPattern
 									} # foreach trip_pattern
 								} # xmlelement journeyPatterns
-							#xmlelement notices
-							#	{
-							#	xmlelement journeyInterchange
-							#		{
-							#		foreach trip_meet
-							#			{
-							#			from 'GetAll(vehicle_schedule, vsc_is_current).Get(meet_builder).Get(trip_meet)'
-							#			xmlelement ServiceJourneyInterchange
-							#				{
-							#				xmlattribute ref 					{ value 'md_authority + ":ScheduledStopPoint:" + stp_identifier' }
-							#				xmlattribute version				{ value 'md_frameVersion' }
-							#				xmlelement Guaranteed 				{ value 'IF meet_public THEN "true" ELSE "false"' }
-							#				xmlelement Advertised 				{ value 'IF meet_driver THEN "true" ELSE "false"' }
-							#				xmlelement MaximumWaitTime 			{ value '"PT" + Format(meet_max_time, "ssss") + "S"' }
-							#				xmlelement FromPointRef 			{ value 'Placeref(meet_place_start).plc_identifier' }
-							#				xmlelement ToPointRef 				{ value 'Placeref(meet_place_end).plc_identifier' }
-							#				xmlelement FromJourneyRef 			{ value 'AtIndex(Get(trip).trp_int_number,1) '}	
-							#				xmlelement ToJourneyRef 			{ value 'AtIndex(Get(trip).trp_int_number,2)' }
-							#				} # xmlelement ServiceJourneyInterchange
-							#			} # xmlelement ServiceJourneyInterchange
-							#		} # xmlelement journeyInterchange
-							#	} # xmlelement notices			
+									
 							} # xmlelement ServiceFrame	
 
 						xmlelement TimetableFrame
@@ -875,13 +818,20 @@ file lines
 							
 							xmlelement vehicleJourneys
 								{
-								#foreach vehicle_schedule
-									#{
-									
+								foreach vehicle_schedule
+								{
 									foreach trip
 										{
+										from 'GetAll(vehicle_schedule).GetAll(trip, md_trp_valid)'
 										condition 'md_trp_valid AND trp_route = rte_identifier'
-																				
+										unique_on 'vsc_int_id, trp_number'
+										sort_by TripStopSort
+											{
+											criteria vsc_int_id
+											criteria vsc_sched_type
+											criteria tpat_route
+											criteria trp_number
+											} # sort_by TripStopSort										
 										var v_trp_link_index {assign '0'}	
 										xmlelement ServiceJourney
 											{
@@ -985,7 +935,7 @@ file lines
 											} # xmlelement ServiceJourney
 											var v_trp_link_index 		{assign ' 0 '}
 										} # foreach trip
-									#} #  foreach vehicle_schedule
+									} #  foreach vehicle_schedule
 								} # xmlelement vehicleJourneys
 							} # xmlelement TimetableFrame	
 						
