@@ -1,0 +1,56 @@
+
+
+
+file stops
+	{
+	name ' "stops.xml" '
+	xmlelement quays
+		{
+		foreach stop
+			{
+			unique_on ' stp_identifier '
+			condition ' stp_is_accessible AND stp_is_public AND loca_x_coord <> NULL AND stp_zone <> NULL AND stp_identifier < 7000000'
+			sort_by ' stp_identifier '
+			xmlelement Quay
+				{
+				condition 'stp_is_public'
+				xmlelement ID 			{ value 'stp_identifier' }
+				xmlelement Name			{ value 'stp_alternate_name' }
+				xmlelement District	
+					{
+					xmlattribute ref			{ value ' stp_district ' }
+					xmlattribute Description	{ value ' stp_district_dsc' }
+					
+					} # xmlelement District
+				xmlelement StopPlaceRef
+					{
+					xmlattribute ref { value ' stp_id_regtopp_calc ' }
+					} # xmlelement StopPlaceRef
+				xmlelement Coordinate
+					{
+						xmlattribute X	{ value ' loca_x_coord ' }
+						xmlattribute Y	{ value ' loca_y_coord ' }
+					} # xmlelement Coordinate
+				#xmlelement StopPointIndication	{ value 'stp_point_indication' }
+				xmlelement Zone
+					{
+					xmlattribute ID		{ value ' stp_zone ' }
+					xmlattribute Name 	{ value ' zon_description ' }
+					} # xmlelement Zone
+				xmlelement KanskjeGrunnkrets		{ value ' loca_region' }
+				#xmlelement Lines
+				#	{
+				#	foreach route
+				#		{
+				#		
+				#		xmlelement Line { value ' "RUT:Line: " + rte_identifier ' }
+				#		} # foreach route
+				#	} # xmlelement Lines
+				xmlelement municip_no	{ value 'loca_municip_no' }
+				
+				} # xmlelement Quay
+			} # foreach stop
+		} # xmlelement quays
+	} # file Netex
+		
+	
