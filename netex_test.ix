@@ -11,7 +11,7 @@ definitions MainDefinitions
 	code
 	DEFINE m_now_iso8601 { DateToday() + "T" + Format(TimeNow(),"0hh:mm") + ":00" }
 	
-	DEFINE md_frameVersion { Format(datetoday(),"!yyyymmdd") }
+	DEFINE md_frameVersion { m_now_iso8601 }
 	DEFINE md_authority { "RUT" }
 	DEFINE m_NeTEx_version { "1.04:NO-NeTEx-networktimetable:1.0" }
 	DEFINE md_trp_valid CLASS trip
@@ -75,6 +75,11 @@ definitions MainDefinitions
 		
 		trp_route + ".xml"
 		}
+	DEFINE m_trip_stop_condition
+		{
+		stp_node_type = 0 AND Prev().tstp_stop_id <> tstp_stop_id AND stp_is_public AND (ttp_is_arrival OR ttp_is_departure)
+		}
+
 	
 	end
 	} # definitions MainDefinitions 
@@ -513,7 +518,7 @@ file lines
 									{
 									from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).Get(trip, md_trp_valid)'
 									unique_on 'trp_route,trp_pattern'
-									condition 'md_trp_valid AND trp_is_in_service AND m_trp_is_included AND trp_route = rte_identifier'
+									condition 'md_trp_valid AND trp_is_in_service AND trp_route = rte_identifier'
 									sort_by TripSort
 										{
 										criteria trp_route
@@ -541,7 +546,7 @@ file lines
 											{
 											foreach trip_stop
 												{												
-												condition 'stp_identifier <> "" AND stp_node_type = 0 AND Prev().tstp_stop_id <> tstp_stop_id AND stp_is_public'
+												condition 'm_trip_stop_condition'
 												var v_tpat_link_index 		{assign ' v_tpat_link_index + 1 '}
 																				
 												xmlelement PointOnRoute
@@ -710,7 +715,7 @@ file lines
 									{
 									from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).Get(trip, md_trp_valid)'
 									unique_on 'trp_route,trp_pattern'
-									condition 'md_trp_valid AND trp_is_in_service AND m_trp_is_included AND trp_route = rte_identifier'
+									condition 'md_trp_valid AND trp_is_in_service AND trp_route = rte_identifier'
 									sort_by TripSort
 										{
 										criteria trp_route
@@ -742,7 +747,7 @@ file lines
 											{
 											foreach trip_stop
 												{												
-												condition 'stp_identifier <> "" AND stp_node_type = 0 AND Prev().tstp_stop_id <> tstp_stop_id AND stp_is_public'
+												condition 'm_trip_stop_condition'
 												var v_tpat_link_index 		{assign ' v_tpat_link_index + 1 '}
 												xmlelement StopPointInJourneyPattern
 													{
@@ -822,7 +827,7 @@ file lines
 								foreach trip
 									{
 									from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).Get(trip, md_trp_valid)'
-									condition 'md_trp_valid AND trp_route = rte_identifier'
+									condition 'md_trp_valid AND trp_is_in_service AND trp_route = rte_identifier'
 									unique_on 'vsc_int_id, trp_number'
 									sort_by TripStopSort
 										{
@@ -885,7 +890,7 @@ file lines
 											{
 											foreach trip_stop
 												{
-												condition ' stp_node_type = 0 AND Prev().tstp_stop_id <> tstp_stop_id AND stp_is_public '
+												condition 'm_trip_stop_condition'
 												sort_by TstpSort { criteria c1 { value ' tstp_position ' } }
 												var v_trp_link_index 		{assign ' v_trp_link_index + 1 '}
 												xmlelement TimetabledPassingTime
