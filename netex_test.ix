@@ -11,7 +11,7 @@ definitions MainDefinitions
 	code
 	DEFINE m_now_iso8601 { DateToday() + "T" + Format(TimeNow(),"0hh:mm") + ":00" }
 	
-	DEFINE md_frameVersion { m_now_iso8601 }
+	DEFINE md_frameVersion { p_JobDate + "-" + p_JobTime }
 	DEFINE md_authority { "RUT" }
 	DEFINE m_NeTEx_version { "1.04:NO-NeTEx-networktimetable:1.0" }
 	DEFINE md_trp_valid CLASS trip
@@ -53,6 +53,14 @@ definitions MainDefinitions
 	DEFINE m_all_trips 
 		{
 		GetAll(vehicle_schedule).Get(trip, m_trp_is_included)
+		}
+	DEFINE m_trips
+		{
+		GetAll(vehicle_schedule).Get(trip, md_trp_valid)
+		}
+	DEFINE m_stops_on_trips
+		{
+		GetAll(vehicle_schedule, vsc_is_current).get(trip, md_trp_valid).get(stop)
 		}
 	DEFINE m_trp_veh_disp_codes	CLASS trip 
 		{ AppendMult(Object(veh_disp_code, trp_vehicle_display),
@@ -487,9 +495,9 @@ file lines
 								{
 								foreach stop
 									{
-									from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).Get(trip_pattern).tpat_stops'
+									from 'm_stops_on_trips'
 									unique_on 'stp_identifier'
-									condition 'stp_is_public AND tpat_route = rte_identifier'
+									condition 'stp_is_public AND trp_route = rte_identifier'
 									sort_by 'stp_identifier'
 									xmlelement RoutePoint
 										{							
@@ -516,7 +524,7 @@ file lines
 								{
 								foreach trip
 									{
-									from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).Get(trip, md_trp_valid)'
+									from 'm_trips'
 									unique_on 'trp_route,trp_pattern'
 									condition 'md_trp_valid AND trp_is_in_service AND trp_route = rte_identifier'
 									sort_by TripSort
@@ -569,7 +577,7 @@ file lines
 								{
 								foreach trip
 									{
-									from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).Get(trip, md_trp_valid)'
+									from 'm_trips'
 									condition 'trp_is_public AND trp_route = rte_identifier'
 									unique_on 'trp_route'
 									sort_by 'trp_route'
@@ -598,11 +606,11 @@ file lines
 								{
 								foreach veh_disp_code
 									{
-									from ' Different(m_all_trips.m_trp_veh_disp_codes) '
+									from ' Different(m_trips.m_trp_veh_disp_codes) '
 									
 									unique_on ' vdc_id '
 									sort_by ' vdc_id '
-									
+									condition ' trp_route = rte_identifier '
 									xmlelement DestinationDisplay
 										{
 										xmlattribute id 				{ value 'md_authority + ":DestinationDisplay:" + vdc_id' }
@@ -616,9 +624,9 @@ file lines
 								{
 								foreach stop
 									{
-									from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).Get(trip_pattern).tpat_stops'
+									from 'm_stops_on_trips'
 									unique_on 'stp_identifier'
-									condition 'stp_is_public AND tpat_route = rte_identifier'
+									condition 'stp_is_public AND trp_route = rte_identifier'
 									sort_by 'stp_identifier'
 									xmlelement ScheduledStopPoint
 										{
@@ -636,9 +644,9 @@ file lines
 								
 								foreach stop
 									{
-									from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).Get(trip_pattern).tpat_stops'
+									from 'm_stops_on_trips'
 									unique_on 'stp_identifier'
-									condition 'stp_is_public AND tpat_route = rte_identifier'
+									condition 'stp_is_public AND trp_route = rte_identifier'
 									sort_by 'stp_identifier'
 									var v_stop_ass_link_index { assign ' v_stop_ass_link_index + 1 ' }
 									xmlelement PassengerStopAssignment
@@ -699,11 +707,21 @@ file lines
 											} # xmlelement ToPointRef
 										xmlelement gml:LineString
 											{
-											
 											xmlattribute srsName { value ' "32632" ' }
-											xmlelement gml:coordinates { value 'md_itn_pnt_coord' } 
-													
-												
+											xmlelement gml:coordinates # { value 'md_itn_pnt_coord' } 
+												{
+												foreach itinerary_segment
+													{
+													xmlelement Segment { value 'iseg_segment_desc'}
+													foreach point
+														{
+														xmlelement Coordinate
+															{
+															xmlelement Coord { value 'itn_coord' }
+															} # xmlelement Coordinate
+														}
+													}
+												}
 											} # xmlelement gml:LineString
 										} # xmlelement TimingLink
 									} # foreach trip_pattern_point
@@ -713,7 +731,7 @@ file lines
 								{
 								foreach trip
 									{
-									from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).Get(trip, md_trp_valid)'
+									from 'm_trips'
 									unique_on 'trp_route,trp_pattern'
 									condition 'md_trp_valid AND trp_is_in_service AND trp_route = rte_identifier'
 									sort_by TripSort
@@ -826,7 +844,7 @@ file lines
 								
 								foreach trip
 									{
-									from 'GetFirstOfAll(vehicle_schedule, vsc_is_current, 1).Get(trip, md_trp_valid)'
+									from 'm_trips'
 									condition 'md_trp_valid AND trp_is_in_service AND trp_route = rte_identifier'
 									unique_on 'vsc_int_id, trp_number'
 									sort_by TripStopSort
