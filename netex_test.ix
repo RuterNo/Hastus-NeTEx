@@ -87,6 +87,11 @@ definitions MainDefinitions
 		{
 		stp_node_type = 0 AND Prev().tstp_stop_id <> tstp_stop_id AND stp_is_public AND (ttp_is_arrival OR ttp_is_departure)
 		}
+	DEFINE m_last_before_depot_stop
+		{
+		Next().tstp_stop_id = 301291191 OR Next().tstp_stop_id = 301291251
+		
+		}
 
 	
 	end
@@ -457,6 +462,11 @@ file lines
 								xmlattribute id 			{ value 'md_authority + ":Network:1"' }
 								xmlattribute version 		{ value 'md_frameVersion' }
 								xmlelement Name				{ value '"Ruter"' }
+								xmlelement AuthorityRef
+									{
+									xmlattribute ref		{ value ' md_authority + ":Authority:" + md_authority ' }
+									xmlattribute version	{ value '"any"' }
+									}
 								
 								xmlelement groupsOfLines
 									{
@@ -927,33 +937,33 @@ file lines
 														} # xmlelement StopPointInJourneyPatternRef					
 													xmlelement ArrivalTime
 														{
-														condition ' NOT ttp_is_departure OR Next().tstp_stop_id = tstp_stop_id '
+														condition ' NOT ttp_is_departure OR Next().tstp_stop_id = tstp_stop_id OR m_last_before_depot_stop'
 														value ' Format(ttp_pass_time_24h, "0hh:mm") + ":00" ' 
 														} # xmlelement ArrivalTime
 													xmlelement ArrivalDayOffset
 														{
-														condition ' ttp_passing_time >= 24:00 AND (NOT ttp_is_departure OR Next().tstp_stop_id = tstp_stop_id) '
+														condition ' ttp_passing_time >= 24:00 AND (NOT ttp_is_departure OR Next().tstp_stop_id = tstp_stop_id OR m_last_before_depot_stop) '
 														value ' "1" '
 														}
 														
 													xmlelement DepartureTime 
 														{
-														condition ' ttp_is_departure '
+														condition ' ttp_is_departure AND (NOT m_last_before_depot_stop)'
 														value ' Format(ttp_pass_time_24h, "0hh:mm") + ":00" ' 
 														} # xmlelement DepartureTime
 													xmlelement DepartureDayOffset
 														{
-														condition ' ttp_passing_time >= 24:00 AND ttp_is_departure'
+														condition ' ttp_passing_time >= 24:00 AND ttp_is_departure AND (NOT m_last_before_depot_stop)'
 														value ' "1" '
 														}
 													xmlelement DepartureTime 
 														{ 
-														condition ' NOT ttp_is_departure AND Next().tstp_stop_id = tstp_stop_id '
+														condition ' NOT ttp_is_departure AND Next().tstp_stop_id = tstp_stop_id AND (NOT m_last_before_depot_stop)'
 														value ' Format(Next().ttp_pass_time_24h, "0hh:mm") + ":00"  ' 
 														} # xmlelement DepartureTime
 													xmlelement DepartureDayOffset
 														{
-														condition ' NOT ttp_is_departure AND (Next().tstp_stop_id = tstp_stop_id AND Next().ttp_passing_time >= 24:00) '
+														condition ' NOT ttp_is_departure AND (Next().tstp_stop_id = tstp_stop_id AND Next().ttp_passing_time >= 24:00 AND (NOT m_last_before_depot_stop)) '
 														value ' "1" '
 														}
 													} # xmlelement TimetabledPassingTime
