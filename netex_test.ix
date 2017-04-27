@@ -11,7 +11,7 @@ definitions MainDefinitions
 	code
 	DEFINE m_now_iso8601 { DateToday() + "T" + Format(TimeNow(),"0hh:mm") + ":00" }
 	
-	DEFINE md_frameVersion { p_JobDate + "-" + p_JobTime }
+	DEFINE md_frameVersion { p_JobDate + "-" + Format(p_JobTime, "0hh/mm/ss") }
 	DEFINE md_authority { "RUT" }
 	DEFINE m_NeTEx_version { "1.04:NO-NeTEx-networktimetable:1.0" }
 	DEFINE md_trp_valid CLASS trip
@@ -32,11 +32,11 @@ definitions MainDefinitions
 		}
 	 DEFINE md_itn_pnt_coord
 		{
-		ConcatMultLine(md_itn_coord, 5)
+		ConcatMultLine(itn_coord, 2)
 		}
 	DEFINE md_itn_coord
 		{
-		AppendMult(itn_coord)
+		Concat(itn_coord) 
 		}
 	DEFINE m_stops_count
 		{
@@ -430,6 +430,14 @@ file lines
 													{
 													xmlattribute id { value 'md_authority + ":Quay:" + stp_identifier' }
 													xmlattribute version { value '"any"' }
+													xmlelement Centroid
+														{
+														xmlelement Location
+															{
+															xmlelement Longitude	{ value ' loca_longitude ' } 
+															xmlelement Latitude		{ value ' loca_latitude ' }
+															} # xmlelement Location
+														} # xmlelement Centroid
 													} # xmlelement Quay
 												} # foreach stop
 											} # xmlelement quays
@@ -456,6 +464,7 @@ file lines
 										{
 										xmlattribute id 			{ value 'md_authority + ":GroupOfLines:1"' }
 										xmlattribute version 		{ value '"any"' }
+										xmlelement Name				{ value '"RuterLines"' }
 										xmlelement members
 											{
 											foreach trip
@@ -594,6 +603,11 @@ file lines
 											xmlattribute ref 			{ value 'md_authority+":Operator:"+ Object(route,trp_route).rte_oper_company' }
 											} # xmlelement AuthorityRef
 										xmlelement Monitored 			{ value 'IF trp_is_in_service THEN "true" ELSE "false"' }
+										xmlelement RepresentedByGroupRef
+											{
+											xmlattribute ref		{ value 'md_authority + ":GroupOfLines:1"' }
+											xmlattribute version	{ value ' "any" ' }
+											} # xmlelement RepresentedByGroupRef
 										#xmlelement AccessibilityAssessment
 										#	{
 										#	xmlattribute id 			{ value 'md_authority + ":AccessibilityAssessment:" + trim(trp_route)' }
@@ -708,20 +722,13 @@ file lines
 										xmlelement gml:LineString
 											{
 											xmlattribute srsName { value ' "32632" ' }
-											xmlelement gml:coordinates # { value 'md_itn_pnt_coord' } 
+											xmlelement gml:posList 
 												{
-												foreach itinerary_segment
-													{
-													xmlelement Segment { value 'iseg_segment_desc'}
-													foreach point
-														{
-														xmlelement Coordinate
-															{
-															xmlelement Coord { value 'itn_coord' }
-															} # xmlelement Coordinate
-														}
-													}
-												}
+												xmlattribute srsDimension	{ value ' "2" ' }
+												value 'md_itn_coord'
+												}											
+												
+												
 											} # xmlelement gml:LineString
 										} # xmlelement TimingLink
 									} # foreach trip_pattern_point
