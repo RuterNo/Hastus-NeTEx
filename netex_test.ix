@@ -391,7 +391,7 @@ file common
 								xmlelement AuthorityRef
 									{
 									xmlattribute ref		{ value ' md_authority + ":Authority:" + md_authority ' }
-									xmlattribute version	{ value '"any"' }
+									xmlattribute version 	{ value 'md_frameVersion' }
 									}
 								
 								xmlelement groupsOfLines
