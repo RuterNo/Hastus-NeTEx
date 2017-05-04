@@ -863,7 +863,7 @@ file lines
 						xmlelement TimetableFrame
 							{	
 							condition ' NOT p_DumpAllStops '
-							xmlattribute id 			{ value 'md_authority + ":TimetableFrame:1"' }
+							xmlattribute id 			{ value 'md_authority + ":TimetableFrame:" + trim(rte_identifier)' }
 							xmlattribute version 		{ value 'md_frameVersion' }
 							
 							
