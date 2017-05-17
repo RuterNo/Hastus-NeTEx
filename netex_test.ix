@@ -128,6 +128,43 @@ definitions MainDefinitions
        trppt_load_time > 0m OR Get(trip_stop, 1).tstp_pass_flow_rest IN [0, 1] /* No restriction or Boarding only */
       }
 	
+                             /*--- Specific information ---*/
+      DEFINE md_vsc_day_type_from CLASS vehicle_schedule
+         { /* Used for looping up to 7 times on the same vehicle_schedule. */
+         AppendMult(GetCurrent(vehicle_schedule), GetCurrent(vehicle_schedule),
+                    GetCurrent(vehicle_schedule), GetCurrent(vehicle_schedule),
+                    GetCurrent(vehicle_schedule), GetCurrent(vehicle_schedule),
+                    GetCurrent(vehicle_schedule)) }                             
+      DEFINE md_calendar_op_day_post CLASS scheduling_unit_date {
+                             /* When a single day schedule type is used we return
+                                the day type of the schedule type, otherwise we
+                                return the day type of the date. */
+         IF scud_vehicle_sched.vsc_sched_type IN [6,13,14,11,3,4,5] /* Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday */ THEN
+            md_date_vsc_type_day
+         ELSE
+            md_calendar_op_day
+         }
+      DEFINE md_calendar_op_day CLASS scheduling_unit_date {
+         scud_day       
+         }
+      DEFINE md_date_vsc_type_day CLASS scheduling_unit_date {
+                             /* For performance reason the schedule type are not
+                                in order of day. */
+         IF scud_vehicle_sched.vsc_sched_type = 6 /* Sunday */ THEN
+            "0"
+         ELSE IF scud_vehicle_sched.vsc_sched_type = 5 /* Saturday */ THEN
+            "6"
+         ELSE IF scud_vehicle_sched.vsc_sched_type = 4 /* Friday */ THEN
+            "5"
+         ELSE IF scud_vehicle_sched.vsc_sched_type = 3 /* Thursday */ THEN
+            "4"
+         ELSE IF scud_vehicle_sched.vsc_sched_type = 11 /* Wednesday */ THEN
+            "3"
+         ELSE IF scud_vehicle_sched.vsc_sched_type = 13 /* Monday */ THEN
+            "1"
+         ELSE /* Tuesday */
+            "2"
+         }
 	end
 	} # definitions MainDefinitions 
 
@@ -149,6 +186,7 @@ var v_vdc2_stop { type 'string'  }
 var v_vdc3_stop { type 'string' }
 var v_vdc4_stop { type 'string' }
 var v_vdc5_stop { type 'string' }
+var v_day_type_loop_count { type 'integer' assign '0' }
 
 parameter p_InclItineraryCoordinates {
 	title 'Include timing links with coordinates'
@@ -317,46 +355,61 @@ file common
 								{
 								foreach vehicle_schedule
 									{
-									foreach scheduling_unit_date
-										{
-										from 'm_all_sched_unit_dates'
-										sort_by 'vsc_int_id, scud_day'
-										unique_on 'vsc_int_id, scud_day'
+                           condition 'vsc_is_current'
+                           var v_day_type_loop_count { assign '0' }
+                           foreach vehicle_schedule
+                              {
+                              desc "This loop is done to print 7 sections DayType for each vehicle schedule."
+                              from 'md_vsc_day_type_from'
+
 										xmlelement DayType
 											{
 											xmlattribute version 			{ value '"any"' }
-											xmlattribute id					{ value ' md_authority + ":DayType:" + scud_day + "-" + vsc_int_id ' }
-											} # xmlelement DayType								
-										} # foreach scheduling_unit_date								
+											xmlattribute id					{ value 'md_authority + ":DayType:" + v_day_type_loop_count + "-" + vsc_int_id' }
+											} # xmlelement DayType
+                              var v_day_type_loop_count { assign 'v_day_type_loop_count + 1' }                                 
+                              } # foreach vehicle_schedule						
 									} # foreach vehicle_schedule
 								} # xmlelement dayTypes
 							} # xmlelement ServiceCalendar												
 						
 						xmlelement dayTypeAssignments
 							{
-							foreach vehicle_schedule
-								{
-								foreach scheduling_unit_date
-									{
-									from ' m_all_sched_unit_dates '
-									sort_by 'vsc_int_id, scud_day '
-									unique_on ' vsc_int_id, scud_day '
-									xmlelement DayTypeAssignment
-										{
-										xmlattribute version 			{ value '"any"' }
-										xmlattribute order				{ value '"1"' }
-										xmlattribute id					{ value ' md_authority + ":DayTypeAssignment:" + scud_day + "-" + vsc_int_id ' }
-										xmlelement Date					{ value 'scud_date' }	
-										xmlelement DayTypeRef
-											{
-											xmlattribute version 		{ value '"any"' }
-											xmlattribute ref 			   { value ' md_authority + ":DayType:" + scud_day + "-" + vsc_int_id ' } 
-											} # xmlelement DayTypeRef
-																			
-										} # xmlelement DayTypeAssignment
-										
-									} # foreach scheduling_unit_date								
-								}	# foreach vehicle_schedule
+                     foreach vehicle_schedule
+                        {
+                        condition 'vsc_is_current'
+                        group_by AllSchedules
+                           {
+                           desc "This group_by is used to put all children of an object
+                                 (scheduling_unit_date) in common. We can then sort the children
+                                 object afterward."
+                           key_part ConstantKey { value 'NULL' }
+                           }    
+                           
+                         foreach scheduling_unit_date
+                           {
+                           from 'GetSchedUnitDates(GetCurrent(vehicle_schedule), p_SchedSet, p_SchedUnit, p_ProdPhase, 
+                                                   p_DateStart, p_DateEnd, p_CalType, p_CalendarId)'                         
+                           sort_by Date
+                              {
+                              desc "This sort_by work because of the group_by at vehicle_schedule
+                                    level."
+                              criteria scud_date
+                              }
+                           xmlelement DayTypeAssignment
+                              {
+                              xmlattribute version 			{ value '"any"' }
+                              xmlattribute order				{ value '"1"' }
+                              xmlattribute id					{ value 'md_authority + ":DayTypeAssignment:" + md_calendar_op_day_post + "-" + scud_vehicle_sched.vsc_int_id' }
+                              xmlelement Date					{ value 'scud_date' }	
+                              xmlelement DayTypeRef
+                                 {
+                                 xmlattribute version 		{ value '"any"' }
+                                 xmlattribute ref 			   { value 'md_authority + ":DayType:" + md_calendar_op_day_post + "-" + scud_vehicle_sched.vsc_int_id' } 
+                                 } # xmlelement DayTypeRef
+                              } # xmlelement DayTypeAssignment                              
+                           } # foreach scheduling_unit_date                        
+                        } # foreach vehicle_schedule                     							
 							} # xmlelement dayTypeAssignments
 						} # xmlelement ServiceCalendarFrame
                   
