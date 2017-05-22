@@ -165,6 +165,7 @@ definitions MainDefinitions
          ELSE /* Tuesday */
             "2"
          }
+
 	end
 	} # definitions MainDefinitions 
 
@@ -206,11 +207,12 @@ parameter p_InclVehicleScheduleFrame {
 	type boolean
 	def_value 'FALSE'
 }
-parameter p_DumpAllStops {
-	title 'Dump all stops from database'
+
+parameter p_RuterAdaptations {
+	title 'Use Ruter adaptations for vehicle display codes'
 	desc ''
 	type boolean
-	def_value 'FALSE'
+	def_value 'TRUE'
 }
 
 file common 
@@ -313,7 +315,7 @@ file common
 									
 									xmlelement ContactDetails
 										{
-										xmlelement Email						{ value '"kjell-t@ring.no"' }
+										xmlelement Email						{ value '"dummy@dummy.no"' }
 										} # xmlelement ContactDetails
 									xmlelement Address
 										{
@@ -322,7 +324,7 @@ file common
 										}
 									xmlelement CustomerServiceContactDetails
 										{
-										xmlelement Email						{ value '"kundemishandling@velkommen.no"' }
+										xmlelement Email						{ value '"dummy@dummy.no"' }
 										} # xmlelement CustomerServiceContactDetails
 									} # xmlelement Operator
 								} # foreach Contractor
@@ -697,7 +699,7 @@ file lines
 		{
 		from 'm_trips'
       #unique_on 'trp_route'
-		#condition 'NOT p_DumpAllStops'
+		
       group_by Route
          {
          key_part 'Get(route).rte_identifier'
@@ -863,17 +865,17 @@ file lines
 										} # sort_by TripSort
 									
 									var v_tpat_link_index {assign '0'}	
-									var v_vdc1 { assign trp_veh_disp_code_1 }
-									var v_vdc2 { assign trp_veh_disp_code_2 }
-									var v_vdc3 { assign trp_veh_disp_code_3 }
-									var v_vdc4 { assign trp_veh_disp_code_4 }
-									var v_vdc5 { assign trp_veh_disp_code_5 }
-									var v_vdc1_stop { assign trp_stop_id_1 }
-									var v_vdc2_stop { assign trp_stop_id_2 }
-									var v_vdc3_stop { assign trp_stop_id_3 }
-									var v_vdc4_stop { assign trp_stop_id_4 }
-									var v_vdc5_stop { assign trp_stop_id_5 }
-									
+																		
+									var v_vdc1 { assign 'IF p_RuterAdaptations THEN trp_veh_disp_code_1 ELSE ""' }
+									var v_vdc2 { assign 'IF p_RuterAdaptations THEN trp_veh_disp_code_2 ELSE ""' }
+									var v_vdc3 { assign 'IF p_RuterAdaptations THEN trp_veh_disp_code_3 ELSE ""' }
+									var v_vdc4 { assign 'IF p_RuterAdaptations THEN trp_veh_disp_code_4 ELSE ""' }
+									var v_vdc5 { assign 'IF p_RuterAdaptations THEN trp_veh_disp_code_5 ELSE ""' }
+									var v_vdc1_stop { assign 'IF p_RuterAdaptations THEN trp_stop_id_1 ELSE ""' }
+									var v_vdc2_stop { assign 'IF p_RuterAdaptations THEN trp_stop_id_2 ELSE ""' }
+									var v_vdc3_stop { assign 'IF p_RuterAdaptations THEN trp_stop_id_3 ELSE ""' }
+									var v_vdc4_stop { assign 'IF p_RuterAdaptations THEN trp_stop_id_4 ELSE ""' }
+									var v_vdc5_stop { assign 'IF p_RuterAdaptations THEN trp_stop_id_5 ELSE ""' }
 									xmlelement JourneyPattern
 										{
 										xmlattribute id 			   { value 'md_authority + ":JourneyPattern:" + Trim(trp_route) + "-" + trp_pattern' }
@@ -917,38 +919,44 @@ file lines
                                                      trppt_load_time = 0m'
 														value ' "false" '
 														} # xmlelement forBoarding													
+																									
+													xmlelement DestinationDisplayRef
+														{
+														condition 'NOT p_RuterAdaptations AND tpatpt_veh_display_code <> ""'
+														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + tpatpt_veh_display_code' }
+														}
 													
 													xmlelement DestinationDisplayRef
 														{
-														condition 'stp_identifier = v_vdc1_stop'
+														condition 'stp_identifier = v_vdc1_stop AND p_RuterAdaptations'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc1' }
 														#xmlattribute version 		{ value 'md_frameVersion' }
 														} # xmlelement DestinationDisplayRef	
 													
 													xmlelement DestinationDisplayRef
 														{
-														condition 'stp_identifier = v_vdc2_stop'
+														condition 'stp_identifier = v_vdc2_stop AND p_RuterAdaptations'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc2' }
 														#xmlattribute version 		{ value 'md_frameVersion' }
 														} # xmlelement DestinationDisplayRef	
 													
 													xmlelement DestinationDisplayRef
 														{
-														condition 'stp_identifier = v_vdc3_stop'
+														condition 'stp_identifier = v_vdc3_stop AND p_RuterAdaptations'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc3' }
 														#xmlattribute version 		{ value 'md_frameVersion' }
 														} # xmlelement DestinationDisplayRef	
 													
 													xmlelement DestinationDisplayRef
 														{
-														condition 'stp_identifier = v_vdc4_stop'
+														condition 'stp_identifier = v_vdc4_stop AND p_RuterAdaptations'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc4' }
 														#xmlattribute version 		{ value 'md_frameVersion' }
 														} # xmlelement DestinationDisplayRef	
 													
 													xmlelement DestinationDisplayRef
 														{
-														condition 'stp_identifier = v_vdc5_stop'
+														condition 'stp_identifier = v_vdc5_stop AND p_RuterAdaptations'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc5' }
 														#xmlattribute version 		{ value 'md_frameVersion' }
 														} # xmlelement DestinationDisplayRef	
@@ -962,7 +970,6 @@ file lines
 
 						xmlelement TimetableFrame
 							{	
-							condition 'NOT p_DumpAllStops'
 							xmlattribute id 			{ value 'md_authority + ":TimetableFrame:" + Trim(rte_identifier)' }
 							xmlattribute version    { value 'md_frameVersion' }
 														
@@ -1085,7 +1092,7 @@ file blocks
       {
       xmlattribute id 			{ value 'md_authority + ":VehicleScheduleFrame:1"' }
       xmlattribute version    { value 'md_frameVersion' }
-      condition 'p_InclVehicleScheduleFrame AND NOT p_DumpAllStops'
+      condition 'p_InclVehicleScheduleFrame'
       xmlelement blocks
          {
          foreach block
