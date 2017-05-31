@@ -268,6 +268,7 @@ file common
 					xmlelement DefaultDataSourceRef 
 						{
 						xmlattribute ref 			     { value 'md_authority + ":DataSource:1"' }
+						xmlattribute version			{ value '"any"' }
 						} # xmlelement DefaultDataSourceRef 
 						xmlelement DefaultLocale
 						{
@@ -630,12 +631,12 @@ file common
                            xmlelement StopPlaceRef
                               {
                               xmlattribute ref			   { value 'md_authority + ":StopPlace:" + stp_id_regtopp_calc' }
-                              # xmlattribute version 		{ value '"any"' }
+                              xmlattribute version 		{ value '"any"' }
                               }
                            xmlelement QuayRef	
                               {
                               xmlattribute ref			   { value 'md_authority + ":Quay:" + stp_identifier' }
-                              # xmlattribute version 		{ value '"any"' }
+                              xmlattribute version 		{ value '"any"' }
                               }
                            } # xmlelement PassengerStopAssignment
                         } # foreach stop
