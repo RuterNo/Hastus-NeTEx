@@ -215,6 +215,13 @@ parameter p_RuterAdaptations {
 	def_value 'TRUE'
 }
 
+parameter p_inclInterchanges {
+	title 'Include interchanges based on meets'
+	desc ''
+	type boolean
+	def_value 'FALSE'
+}
+
 file common 
 	{ 
    name ' "_common.xml" '
@@ -967,6 +974,30 @@ file lines
 										} # xmlelement JourneyPattern
 									} # foreach trip_pattern
 								} # xmlelement journeyPatterns
+								
+								xmlelement notices
+		 							{
+									condition p_inclInterchanges
+		 							xmlelement journeyInterchanges
+		 								{
+		 								foreach trip_meet
+		 									{
+		 									from 'GetAll(vehicle_schedule, vsc_is_current).Get(meet_builder).Get(trip_meet)'
+		 									xmlelement ServiceJourneyInterchange
+		 										{
+		 										xmlattribute ref 					{ value 'md_authority + ":ScheduledStopPoint:" + stp_identifier' }
+		 										xmlattribute version				{ value 'md_frameVersion' }
+		 										xmlelement Guaranteed 				{ value 'IF meet_public THEN "true" ELSE "false"' }
+		 										xmlelement Advertised 				{ value 'IF meet_driver THEN "true" ELSE "false"' }
+		 										xmlelement MaximumWaitTime 			{ value '"PT" + Format(meet_max_time, "ssss") + "S"' }
+		 										xmlelement FromPointRef 			{ value 'Placeref(meet_place_start).plc_identifier' }
+		 										xmlelement ToPointRef 				{ value 'Placeref(meet_place_end).plc_identifier' }
+		 										xmlelement FromJourneyRef 			{ value 'AtIndex(Get(trip).trp_int_number,1) '}	
+		 										xmlelement ToJourneyRef 			{ value 'AtIndex(Get(trip).trp_int_number,2)' }
+		 										} # xmlelement ServiceJourneyInterchange
+		 									} # foreach trip_meet
+		 								} # xmlelement journeyInterchanges
+		 							} # xmlelement notices
 							} # xmlelement ServiceFrame	
 
 						xmlelement TimetableFrame
