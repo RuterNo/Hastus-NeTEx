@@ -96,6 +96,10 @@ definitions MainDefinitions
 		{
 		stp_node_type = 0 /*N*/ AND stp_is_public
 		}   
+	 DEFINE m_stop_condition CLASS stop
+		{
+		stp_node_type = 0 /*N*/ AND stp_is_public
+		}   	
 	DEFINE m_last_in_service_stop CLASS trip_point
 		{
                              /* Check that current stop is public and there are 
@@ -433,7 +437,7 @@ file common
                      foreach stop
                         {
                         from 'GetAll(vehicle_schedule, vsc_is_current).stps_in_vsc'
-                        condition 'stp_is_public'
+                        condition 'm_stop_condition'
                         sort_by StopSort
                            {
                            criteria stp_id_regtopp_calc
@@ -975,36 +979,14 @@ file lines
 									} # foreach trip_pattern
 								} # xmlelement journeyPatterns
 								
-								xmlelement notices
-		 							{
-									condition p_inclInterchanges
-		 							xmlelement journeyInterchanges
-		 								{
-		 								foreach trip_meet
-		 									{
-		 									from 'GetAll(vehicle_schedule, vsc_is_current).Get(meet_builder).Get(trip_meet)'
-		 									xmlelement ServiceJourneyInterchange
-		 										{
-		 										xmlattribute ref 					{ value 'md_authority + ":ScheduledStopPoint:" + stp_identifier' }
-		 										xmlattribute version				{ value 'md_frameVersion' }
-		 										xmlelement Guaranteed 				{ value 'IF meet_public THEN "true" ELSE "false"' }
-		 										xmlelement Advertised 				{ value 'IF meet_driver THEN "true" ELSE "false"' }
-		 										xmlelement MaximumWaitTime 			{ value '"PT" + Format(meet_max_time, "ssss") + "S"' }
-		 										xmlelement FromPointRef 			{ value 'Placeref(meet_place_start).plc_identifier' }
-		 										xmlelement ToPointRef 				{ value 'Placeref(meet_place_end).plc_identifier' }
-		 										xmlelement FromJourneyRef 			{ value 'AtIndex(Get(trip).trp_int_number,1) '}	
-		 										xmlelement ToJourneyRef 			{ value 'AtIndex(Get(trip).trp_int_number,2)' }
-		 										} # xmlelement ServiceJourneyInterchange
-		 									} # foreach trip_meet
-		 								} # xmlelement journeyInterchanges
-		 							} # xmlelement notices
+								
 							} # xmlelement ServiceFrame	
 
 						xmlelement TimetableFrame
 							{	
 							xmlattribute id 			{ value 'md_authority + ":TimetableFrame:" + Trim(rte_identifier)' }
 							xmlattribute version    { value 'md_frameVersion' }
-														
+																		 												
 							xmlelement vehicleJourneys
 								{								
 								foreach trip
@@ -1108,6 +1090,26 @@ file lines
 										var v_trp_link_index 		{assign ' 0 '}
 									} # foreach trip
 								} # xmlelement vehicleJourneys
+							xmlelement journeyInterchanges
+								{
+								condition p_inclInterchanges
+								foreach trip_meet
+									{
+									from 'GetAll(vehicle_schedule, vsc_is_current).Get(meet_builder).Get(trip_meet)'
+									xmlelement ServiceJourneyInterchange
+										{
+										xmlattribute ref 					{ value 'md_authority + ":ScheduledStopPoint:" + stp_identifier' }
+										xmlattribute version				{ value 'md_frameVersion' }
+										xmlelement Guaranteed 				{ value 'IF meet_public THEN "true" ELSE "false"' }
+										xmlelement Advertised 				{ value 'IF meet_driver THEN "true" ELSE "false"' }
+										xmlelement MaximumWaitTime 			{ value '"PT" + Format(meet_max_time, "ssss") + "S"' }
+										xmlelement FromPointRef 			{ value 'Placeref(meet_place_start).plc_identifier' }
+										xmlelement ToPointRef 				{ value 'Placeref(meet_place_end).plc_identifier' }
+										xmlelement FromJourneyRef 			{ value 'AtIndex(Get(trip).trp_int_number,1) '}	
+										xmlelement ToJourneyRef 			{ value 'AtIndex(Get(trip).trp_int_number,2)' }
+										} # xmlelement ServiceJourneyInterchange
+									} # foreach trip_meet
+								} # xmlelement journeyInterchanges
 							} # xmlelement TimetableFrame	
 						} # xmlelement frames
 					} # xmlelement CompositeFrame 
