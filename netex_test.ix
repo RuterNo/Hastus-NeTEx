@@ -414,7 +414,7 @@ file common
                               {
                               xmlattribute version 			{ value '"any"' }
                               xmlattribute order				{ value '"1"' }
-                              xmlattribute id					{ value 'md_authority + ":DayTypeAssignment:" + md_calendar_op_day_post + "-" + scud_vehicle_sched.vsc_int_id' }
+                              xmlattribute id					{ value 'md_authority + ":DayTypeAssignment:" + md_calendar_op_day_post + "-" + scud_vehicle_sched.vsc_int_id + "-" + Format(scud_date, "!yyyymmdd")' }
                               xmlelement Date					{ value 'scud_date' }	
                               xmlelement DayTypeRef
                                  {
