@@ -890,6 +890,7 @@ file lines
 									var v_vdc5_stop { assign 'IF p_RuterAdaptations THEN trp_stop_id_5 ELSE ""' }
 									xmlelement JourneyPattern
 										{
+										
 										xmlattribute id 			   { value 'md_authority + ":JourneyPattern:" + Trim(trp_route) + "-" + trp_pattern' }
 										xmlattribute version 	   { value 'md_frameVersion' }
 										xmlelement RouteRef
@@ -934,41 +935,41 @@ file lines
 																									
 													xmlelement DestinationDisplayRef
 														{
-														condition 'NOT p_RuterAdaptations AND tpatpt_veh_display_code <> ""'
-														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + tpatpt_veh_display_code' }
+														condition 'trp_vehicle_display <> "" AND Prev() = NULL'
+														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + trp_vehicle_display' }
 														}
 													
 													xmlelement DestinationDisplayRef
 														{
-														condition 'stp_identifier = v_vdc1_stop AND p_RuterAdaptations'
+														condition 'stp_identifier = v_vdc1_stop'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc1' }
 														#xmlattribute version 		{ value 'md_frameVersion' }
 														} # xmlelement DestinationDisplayRef	
 													
 													xmlelement DestinationDisplayRef
 														{
-														condition 'stp_identifier = v_vdc2_stop AND p_RuterAdaptations'
+														condition 'stp_identifier = v_vdc2_stop'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc2' }
 														#xmlattribute version 		{ value 'md_frameVersion' }
 														} # xmlelement DestinationDisplayRef	
 													
 													xmlelement DestinationDisplayRef
 														{
-														condition 'stp_identifier = v_vdc3_stop AND p_RuterAdaptations'
+														condition 'stp_identifier = v_vdc3_stop'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc3' }
 														#xmlattribute version 		{ value 'md_frameVersion' }
 														} # xmlelement DestinationDisplayRef	
 													
 													xmlelement DestinationDisplayRef
 														{
-														condition 'stp_identifier = v_vdc4_stop AND p_RuterAdaptations'
+														condition 'stp_identifier = v_vdc4_stop'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc4' }
 														#xmlattribute version 		{ value 'md_frameVersion' }
 														} # xmlelement DestinationDisplayRef	
 													
 													xmlelement DestinationDisplayRef
 														{
-														condition 'stp_identifier = v_vdc5_stop AND p_RuterAdaptations'
+														condition 'stp_identifier = v_vdc5_stop'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc5' }
 														#xmlattribute version 		{ value 'md_frameVersion' }
 														} # xmlelement DestinationDisplayRef	
