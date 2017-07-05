@@ -193,6 +193,12 @@ var v_vdc4_stop { type 'string' }
 var v_vdc5_stop { type 'string' }
 var v_day_type_loop_count { type 'integer' assign '0' }
 
+parameter p_ExportIdentifier {
+	title 'Enter refereece for this export, without spaces'
+	desc ''
+	type string
+	def_value 'default'
+}
 parameter p_InclItineraryCoordinates {
 	title 'Include timing links with coordinates'
 	desc ''
@@ -228,7 +234,7 @@ parameter p_inclInterchanges {
 
 file common 
 	{ 
-   name ' "_common.xml" '
+   name ' "_common_" + p_ExportIdentifier + ".xml" '
    schema 'none'   
 	xmlelement PublicationDelivery 
 		{
@@ -244,7 +250,7 @@ file common
 			
 			xmlelement CompositeFrame 
 				{				
-				xmlattribute id 					   { value 'md_authority + ":CompositeFrame:1"' }
+				xmlattribute id 					   { value 'md_authority + ":CompositeFrame:" + p_ExportIdentifier' }
 				xmlattribute version 				{ value '"any"' }
 				xmlattribute modification 			{ value '"new"' }
 				
@@ -300,7 +306,7 @@ file common
 					{
 					xmlelement ResourceFrame 
 						{
-						xmlattribute id 				   { value 'md_authority + ":ResourceFrame:1"' }
+						xmlattribute id 				   { value 'md_authority + ":ResourceFrame:" + p_ExportIdentifier' }
 						xmlattribute version 			{ value 'md_frameVersion' }
 						xmlelement dataSources
 							{
@@ -358,7 +364,7 @@ file common
 					
 					xmlelement ServiceCalendarFrame
 						{
-						xmlattribute id 				{ value 'md_authority + ":ServiceCalendarFrame:1"' }
+						xmlattribute id 				{ value 'md_authority + ":ServiceCalendarFrame:" + p_ExportIdentifier' }
 						xmlattribute version 		{ value '"any"' }
 						
 						xmlelement ServiceCalendar
@@ -429,7 +435,7 @@ file common
                   
 					xmlelement SiteFrame
                   {
-                  xmlattribute id 			   { value 'md_authority + ":SiteFrame:1"' }
+                  xmlattribute id 			   { value 'md_authority + ":SiteFrame:" + p_ExportIdentifier' }
                   xmlattribute version 		{ value 'md_frameVersion' }
                   condition ' p_InclSiteFrame '
                   xmlelement stopPlaces
@@ -486,7 +492,7 @@ file common
                   
                xmlelement ServiceFrame
                   {
-                  xmlattribute id 			{ value 'md_authority + ":ServiceFrame:1"' }
+                  xmlattribute id 			{ value 'md_authority + ":ServiceFrame:" + p_ExportIdentifier' }
                   xmlattribute version    { value 'md_frameVersion' }
 
                   xmlelement Network
