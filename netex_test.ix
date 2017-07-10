@@ -94,7 +94,7 @@ definitions MainDefinitions
 		}
    DEFINE m_trip_point_condition CLASS trip_point
 		{
-		stp_node_type = 0 /*N*/ AND stp_is_public
+		trppt_departure_trip_stop.stp_node_type = 0 /*N*/ AND trppt_departure_trip_stop.stp_is_public
 		}   
 	 DEFINE m_stop_condition CLASS stop
 		{
@@ -941,6 +941,7 @@ file lines
 																									
 													xmlelement DestinationDisplayRef
 														{
+														# default handling
 														condition 'trp_vehicle_display <> "" AND Prev() = NULL'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + trp_vehicle_display' }
 														}
@@ -949,6 +950,7 @@ file lines
 														{
 														condition 'stp_identifier = v_vdc1_stop'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc1' }
+														#var v_vdc1_stop { assign ' "" ' }
 														#xmlattribute version 		{ value 'md_frameVersion' }
 														} # xmlelement DestinationDisplayRef	
 													
@@ -956,6 +958,7 @@ file lines
 														{
 														condition 'stp_identifier = v_vdc2_stop'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc2' }
+														#var v_vdc2_stop { assign ' "" ' }
 														#xmlattribute version 		{ value 'md_frameVersion' }
 														} # xmlelement DestinationDisplayRef	
 													
@@ -963,6 +966,7 @@ file lines
 														{
 														condition 'stp_identifier = v_vdc3_stop'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc3' }
+														#var v_vdc3_stop { assign ' "" ' }
 														#xmlattribute version 		{ value 'md_frameVersion' }
 														} # xmlelement DestinationDisplayRef	
 													
@@ -970,6 +974,7 @@ file lines
 														{
 														condition 'stp_identifier = v_vdc4_stop'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc4' }
+														#var v_vdc4_stop { assign ' "" ' }
 														#xmlattribute version 		{ value 'md_frameVersion' }
 														} # xmlelement DestinationDisplayRef	
 													
@@ -977,6 +982,7 @@ file lines
 														{
 														condition 'stp_identifier = v_vdc5_stop'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + v_vdc5' }
+														#var v_vdc5_stop { assign ' "" ' }
 														#xmlattribute version 		{ value 'md_frameVersion' }
 														} # xmlelement DestinationDisplayRef	
 													} # xmlelement StopPointInJourneyPattern								
