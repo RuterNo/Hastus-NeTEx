@@ -942,7 +942,7 @@ file lines
 													xmlelement DestinationDisplayRef
 														{
 														# default handling
-														condition 'trp_vehicle_display <> "" AND Prev() = NULL'
+														condition 'trp_vehicle_display <> "" AND m_first_in_service_stop'
 														xmlattribute ref		{ value 'md_authority + ":DestinationDisplay:" + trp_vehicle_display' }
 														}
 													
