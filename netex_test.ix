@@ -506,33 +506,7 @@ file common
                         xmlattribute version 	{ value 'md_frameVersion' }
                         }
                      
-                     xmlelement groupsOfLines
-                        {
-                        xmlelement GroupOfLines
-                           {
-                           xmlattribute id 			{ value 'md_authority + ":GroupOfLines:1"' }
-                           xmlattribute version 	{ value '"any"' }
-                           xmlelement Name			{ value '"RuterLines"' }
-                           xmlelement members
-                              {
-                              foreach route
-                                 {
-                                 from 'GetAll(vehicle_schedule, vsc_is_current).rtes_in_vsc'
-                                 unique_on 'rte_identifier'
-                                 sort_by RouteSort
-                                    {
-                                    criteria rte_identifier
-                                    }                                 
 
-                                 xmlelement LineRef
-                                    {
-                                    xmlattribute ref { value 'md_authority + ":Line:" + Trim(rte_identifier)' }
-                                    # xmlattribute version 		{ value '"any"' }
-                                    } # xmlelement LineRef
-                                 } # foreach trip
-                              } # xmlelement members
-                           } # xmlelement GroupOfLines
-                        } # xmlelement groupsOfLines
                      } # xmlelement Network
                      
                   xmlelement directions
@@ -861,7 +835,7 @@ file lines
 										xmlelement Monitored 		{ value 'IF trp_is_in_service THEN "true" ELSE "false"' }
 										xmlelement RepresentedByGroupRef
 											{
-											xmlattribute ref		   { value 'md_authority + ":GroupOfLines:1"' }
+											xmlattribute ref		   { value 'md_authority + ":Network:1"' }
 											# xmlattribute version	{ value ' "any" ' }
 											} # xmlelement RepresentedByGroupRef
 										
