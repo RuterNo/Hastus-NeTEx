@@ -234,7 +234,7 @@ parameter p_inclInterchanges {
 
 file common 
 	{ 
-   name ' "_common_" + p_ExportIdentifier + ".xml" '
+   name ' "_common_" + p_ExportIdentifier + "_" + md_frameVersion + ".xml" '
    schema 'none'   
 	xmlelement PublicationDelivery 
 		{
@@ -285,7 +285,7 @@ file common
 					xmlelement DefaultDataSourceRef 
 						{
 						xmlattribute ref 			     { value 'md_authority + ":DataSource:1"' }
-						xmlattribute version			{ value '"any"' }
+						xmlattribute version			{ value 'md_frameVersion' }
 						} # xmlelement DefaultDataSourceRef 
 						xmlelement DefaultLocale
 						{
@@ -685,7 +685,7 @@ file common
 
 file lines 
 	{
-	name 'Trim(Get(route).rte_identifier) + ".xml"'
+	name 'Trim(Get(route).rte_identifier) + "_" + md_frameVersion + ".xml"'
    schema 'none'
 	foreach trip
 		{
