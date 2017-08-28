@@ -202,6 +202,7 @@ file tur
 			item Post { value '"Post"' }
 			item VariantNr { value '"VariantNr"' }
 			item DTG { value '"DTG"' }
+			item DTG2 { value '"DTG2"' }
 		} # line header
 	foreach trip
 		{
@@ -222,7 +223,8 @@ file tur
 				item TripType { value '""' }
 				item Post { value '""' }
 				item VariantNr { value 'trp_pattern' }
-				item DTG { value 'trp_runtime' }
+				item DTG { value 'trp_run_time_pattern.rpat_identifier' }
+				item DTG2 { value 'trp_run_time_pattern.rpat_external_id' }
 			} # line trip
 		} # foreach trip
 	} # file tur
@@ -283,13 +285,13 @@ file vardrive
 				item VariantName { value 'trim(trp_pattern AS str10_t)' }
 				item SequenceNr { value 'trim(trppt_position AS str10_t)' }
 				item StopNr { value 'trim((stp_id_regtopp_calc AS int4_t) as str10_t)' }
-				item StopPosNr { value 'stp_pole_number AS int2_t' }
+				item StopPosNr { value 'trim((stp_pole_number AS int2_t) as str10_t)' }
 				item Distance { value 'trppt_distance' }
 				item DestCode { value 'trp_vehicle_display' }
 				item MessageCode { value '"Msgcode"' }
 				item RegulationStop { value '"1"' } # all stops are reg stops
-				item DrivingTime { value 'tstp_delta_time' }
-				item WaitingTime { value 'trppt_hold_time' }
+				item DrivingTime { value 'trim((tstp_delta_time as int4_t) as str10_t)' }
+				item WaitingTime { value 'IF trppt_load_time = NULL THEN "0" ELSE trim((trppt_load_time as int4_t) as str10_t)' }
 				}
 			} # foreach trip_point
 		
@@ -332,21 +334,21 @@ file hpl
 			item StopName {value 'stp_description'}
 			item ShortName {value 'stp_short_name'}
 			item TimeTableName {value 'stp_alternate_name'}
-			item BusposName {value '""'} 
-			item MonitorName {value 'stp_description'}
+			item BusposName {value '""'} # ignored
+			item MonitorName {value '""'} # ignored
 			item StopType {value 'm_stop_type'}
-			item FareZoneNr {value 'stp_zone.zon_description'}
-			item NrOfPositions {value '""'}
-			item SpeechCode {value '""'}
-			item Extra1-CrossingNr {value '""'}
-			item Extra2-TypeOfSP {value '""'}
-			item Extra3-MetersBeforeSPAct {value '""'}
-			item NextSpeechChannel {value '""'}
-			item NextDataChannel {value '""'}
-			item TransferInfo {value '""'}
-			item InterchangeOptionsText {value '""'}
-			item StopNsmeEN {value 'stp_alternate_name'}
-			item AdditionalText {value '""'}
+			item FareZoneNr {value 'stp_zone.zon_description'} # ignored? Sjekk dette
+			item NrOfPositions {value '""'} # not ignored!
+			item SpeechCode {value 'stp_id_regtopp_calc'}
+			item Extra1-CrossingNr {value '""'} # ignored
+			item Extra2-TypeOfSP {value '""'} # ignored
+			item Extra3-MetersBeforeSPAct {value '""'} # ignored
+			item NextSpeechChannel {value '""'} # ignored
+			item NextDataChannel {value '""'} # ignored
+			item TransferInfo {value 'var_identifier'} # korresponderende linjer (til PIDVisio)
+			item InterchangeOptionsText {value '""'} # ignored
+			item StopNsmeEN {value '""'} # ignored
+			item AdditionalText {value '""'} # ignored
 			item AdditionalTextEN {value '""'} 
 			item PointOfInterest {value '"0"'}
 			item PIDVisioViewC {value '"0"'}
@@ -372,7 +374,7 @@ file hpllage
 		line hpllage
 			{
 				item StopNr {value 'stp_identifier'}
-				item StopPosName {value 'stp_pole_number AS int2_t'} # replace with the new field when in place
+				item StopPosName {value 'stp_point_indication'} # replace with the new field when in place
 				item X-Position {value 'loca_x_coord'}
 				item Y-Position {value 'loca_y_coord'}
 				item HasRealTimeSign {value 'IF stp_equipment_1 = TRUE then "1" ELSE "0"'}
@@ -459,8 +461,8 @@ file omlopp
 			item RunNr {value 'blk_number'}
 			item StartDepot {value 'blk_stop_first.stp_id_regtopp_calc'}
 			item EndDepot {value 'blk_stop_last.stp_id_regtopp_calc'}
-			item PullOutTime {value 'blk_time_start'}
-			item PullInTime {value 'blk_time_end'}
+			item PullOutTime {value 'Format(blk_time_start, "0hh~/mm/ss|xx:xx:xx")'}
+			item PullInTime {value 'Format(blk_time_end, "0hh~/mm/ss|xx:xx:xx")'}
 			item Operator {value 'blk_garage.gar_contractor.cntr_description'}
 			item DrivingDates {value 'blk_operating_days'}
 			} # line block
