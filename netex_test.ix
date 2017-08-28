@@ -29,6 +29,7 @@ definitions MainDefinitions
 		ELSE
 			rte_service_mode
 		}
+	
 	 DEFINE md_itn_pnt_coord
 		{
 		ConcatMultLine(itn_coord, 2)
@@ -826,7 +827,56 @@ file lines
 										xmlattribute version 	   { value '"any"' }
 										
 										xmlelement Name 			   { value 'Object(route, trp_route).rte_description' }
-										xmlelement TransportMode   { value 'md_rte_service_mode' }
+										# xmlelement TransportMode   { value 'md_rte_service_mode' }
+										xmlelement TransportMode   { value ' IF rte_service_type = 4 THEN "water"
+										
+																				ELSE IF rte_service_type = 1 THEN "bus"
+																				ELSE IF rte_service_type = 9 THEN "bus"
+																				ELSE IF rte_service_type = 7 THEN "metro"
+																				ELSE IF rte_service_type = 6 THEN "tram"
+																				ELSE "bus" ' }
+										
+										xmlelement WaterSubMode		
+											{
+											condition ' rte_service_type = 4 '										
+											value '"localPassengerFerry"' 
+											}
+										xmlelement BusSubMode		
+											{
+											condition ' rte_service_type = 0 '										
+											value '"airportLinkBus"' 
+											}
+										xmlelement BusSubMode		
+											{
+											condition ' rte_service_type = 1 '										
+											value '"localBus"' 
+											}
+										xmlelement BusSubMode		
+											{
+											condition ' rte_service_type = 2 '										
+											value '"expressBus"' 
+											}
+										xmlelement BusSubMode		
+											{
+											condition ' rte_service_type = 9 '										
+											value '"schoolBus"' 
+											}
+										xmlelement BusSubMode		
+											{
+											condition ' rte_service_type = 13 '										
+											value '"nightBus"' 
+											}
+										xmlelement MetroSubMode		
+											{
+											condition ' rte_service_type = 7 '										
+											value '"metro"' 
+											}
+										xmlelement TramSubMode		
+											{
+											condition ' rte_service_type = 6 '										
+											value '"localTram"' 
+											}
+										
 										xmlelement PublicCode 	   { value 'Trim(Object(route, trp_route).rte_pub_id)' }
 										xmlelement OperatorRef
 											{
