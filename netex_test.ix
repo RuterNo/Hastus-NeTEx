@@ -834,7 +834,7 @@ file lines
 																			ELSE IF rte_service_type = 7 THEN "metro"
 																			ELSE IF rte_service_type = 6 THEN "tram"
 																			ELSE "bus" ' }
-										xmlelement TransportSubMode
+										xmlelement TransportSubmode
 											{
 											xmlelement WaterSubmode		
 												{
