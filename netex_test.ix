@@ -550,7 +550,7 @@ file common
                                  xmlattribute version	   { value 'md_frameVersion' }
                                  xmlelement ProjectedPointRef
                                     {
-                                    xmlattribute ref     { value 'md_authority + ":ScheduledStopPoint:" + stp_identifier ' }
+                                    xmlattribute ref     { value 'md_authority + ":ScheduledStopPoint:" + p_ExportIdentifier + "-" + stp_identifier ' }
                                     xmlattribute version { value '"any"' }
                                     } # xmlelement ProjectedPointRef	
                                  } # xmlelement PointProjection
@@ -592,7 +592,7 @@ file common
                            }
                         xmlelement ScheduledStopPoint
                            {
-                           xmlattribute id 				{ value 'md_authority + ":ScheduledStopPoint:" + stp_identifier' }
+                           xmlattribute id 				{ value 'md_authority + ":ScheduledStopPoint:" + p_ExportIdentifier + "-" + stp_identifier' }
                            xmlattribute version 		{ value '"any"' }
                            xmlelement Name 				{ value 'stp_alternate_name' } # User def attribute (Regtopp)
                            } # xmlelement ScheduledStopPoint
@@ -617,7 +617,7 @@ file common
                            xmlattribute order				{ value 'v_stop_ass_link_index' }
                            xmlelement ScheduledStopPointRef
                               {
-                              xmlattribute ref 			   { value 'md_authority + ":ScheduledStopPoint:" + stp_identifier' }
+                              xmlattribute ref 			   { value 'md_authority + ":ScheduledStopPoint:" + p_ExportIdentifier + "-" + stp_identifier' }
                               xmlattribute version 		{ value '"any"' }
                               }
                            xmlelement StopPlaceRef
@@ -656,12 +656,12 @@ file common
                            xmlelement Distance 					{ value 'Trim(Format(tpatpt_distance,"zzzzz.n"))' }
                            xmlelement FromPointRef
                               { 
-                              xmlattribute ref 		      { value 'md_authority + ":ScheduledStopPoint:" + Prev().stp_identifier' }
+                              xmlattribute ref 		      { value 'md_authority + ":ScheduledStopPoint:" + p_ExportIdentifier + "-" + Prev().stp_identifier' }
                               xmlattribute version 		{ value '"any"' }
                               } # xmlelement FromPointRef
                            xmlelement ToPointRef
                               {
-                              xmlattribute ref 		      { value 'md_authority + ":ScheduledStopPoint:" + stp_identifier' }
+                              xmlattribute ref 		      { value 'md_authority + ":ScheduledStopPoint:" + p_ExportIdentifier + "-" + stp_identifier' }
                               xmlattribute version 		{ value '"any"' }
                               } # xmlelement ToPointRef
                            xmlelement gml:LineString
@@ -942,7 +942,7 @@ file lines
 													xmlattribute order 		{ value 'v_tpat_link_index' }	
 													xmlelement ScheduledStopPointRef
 														{
-														xmlattribute ref 		{ value 'md_authority + ":ScheduledStopPoint:" + stp_identifier' }
+														xmlattribute ref 		{ value 'md_authority + ":ScheduledStopPoint:" + p_ExportIdentifier + "-" + stp_identifier' }
 														# xmlattribute version 		{ value '"any"' }
 														} # xmlelement ScheduledStopPointRef
 													xmlelement ForAlighting
@@ -1136,7 +1136,7 @@ file lines
 									from 'GetAll(vehicle_schedule, vsc_is_current).Get(meet_builder).Get(trip_meet)'
 									xmlelement ServiceJourneyInterchange
 										{
-										xmlattribute ref 					{ value 'md_authority + ":ScheduledStopPoint:" + stp_identifier' }
+										xmlattribute ref 					{ value 'md_authority + ":ScheduledStopPoint:" + p_ExportIdentifier + "-" + stp_identifier' }
 										xmlattribute version				{ value 'md_frameVersion' }
 										xmlelement Guaranteed 				{ value 'IF meet_public THEN "true" ELSE "false"' }
 										xmlelement Advertised 				{ value 'IF meet_driver THEN "true" ELSE "false"' }
