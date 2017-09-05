@@ -540,7 +540,7 @@ file common
                            }
                         xmlelement RoutePoint
                            {							
-                           xmlattribute id 			{ value 'md_authority + ":RoutePoint:" + stp_identifier' }
+                           xmlattribute id 			{ value 'md_authority + ":RoutePoint:" + p_ExportIdentifier + "-" + stp_identifier' }
                            xmlattribute version 	{ value 'md_frameVersion' }
                            xmlelement projections
                               {
@@ -802,7 +802,7 @@ file lines
 													xmlattribute version    { value 'md_frameVersion' }
 													xmlelement RoutePointRef
 														{
-														xmlattribute ref		{ value 'md_authority + ":RoutePoint:" + stp_identifier' }
+														xmlattribute ref		{ value 'md_authority + ":RoutePoint:" + p_ExportIdentifier + "-" + stp_identifier' }
 														# xmlattribute version	{ value 'md_frameVersion' }
 														} # xmlelement PointRef
 													} # xmlelement PointOnRoute
